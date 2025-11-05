@@ -1,0 +1,186 @@
+const express = require('express');
+const router = express.Router();
+const bcrypt = require('bcryptjs');
+const { check, validationResult } = require('express-validator');
+const { auth, authorize } = require('../middleware/auth');
+const User = require('../models/User');
+const Subscription = require('../models/Subscription');
+
+// @route   GET /api/admin/admins
+// @desc    Get all admins with their subscription details (Super Admin only)
+// @access  Private (Super Admin)
+router.get('/admins', [auth, authorize('super_admin')], async (req, res) => {
+  try {
+    // Find all admin users
+    const admins = await User.find({ role: 'admin' })
+      .select('fullName name email isActive createdAt updatedAt')
+      .lean();
+
+    if (!admins || admins.length === 0) {
+      return res.json([]);
+    }
+
+    // Always lookup subscriptions by adminId for all admins
+    const adminIds = admins.map(a => a._id);
+    const subs = await Subscription.find({ adminId: { $in: adminIds } })
+      .select('plan status startDate endDate memberLimit adminId createdAt updatedAt')
+      .lean();
+
+    const subByAdmin = new Map(subs.map(s => [String(s.adminId), s]));
+
+    // Assemble response
+    const result = admins.map(a => ({
+      _id: a._id,
+      fullName: a.fullName || a.name,
+      email: a.email,
+      isActive: a.isActive,
+      createdAt: a.createdAt,
+      updatedAt: a.updatedAt,
+      subscription: (() => {
+        const sub = subByAdmin.get(String(a._id));
+        if (!sub) return undefined;
+        // Normalize endDate to one month from startDate for all packages
+        const start = new Date(sub.startDate);
+        const normalizedEnd = new Date(start);
+        normalizedEnd.setMonth(normalizedEnd.getMonth() + 1);
+        return {
+          plan: sub.plan,
+          status: sub.status,
+          startDate: start,
+          endDate: normalizedEnd,
+          memberLimit: sub.memberLimit,
+        };
+      })(),
+    }));
+
+    res.json(result);
+  } catch (error) {
+    console.error('Error fetching admins:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// @route   POST /api/auth/register-admin
+// @desc    Register a new admin (Super Admin only)
+// @access  Private (Super Admin)
+router.post('/register-admin', [
+  auth,
+  authorize('super_admin'),
+  [
+    check('fullName', 'Full name is required').not().isEmpty(),
+    check('email', 'Please include a valid email').isEmail(),
+    check('password', 'Please enter a password with 6 or more characters').isLength({ min: 6 }),
+    check('plan', 'Please select a valid plan').isIn(['starter', 'professional', 'enterprise'])
+  ]
+], async (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
+  }
+
+  const { fullName, email, password, plan } = req.body;
+
+  try {
+    // Check if user already exists
+    let user = await User.findOne({ email });
+    if (user) {
+      return res.status(400).json({ message: 'User already exists' });
+    }
+
+    // Create user
+    user = new User({
+      fullName,
+      email,
+      password,
+      role: 'admin',
+      isActive: true,
+      emailVerified: true
+    });
+
+    // Hash password
+    const salt = await bcrypt.genSalt(10);
+    user.password = await bcrypt.hash(password, salt);
+
+    // Save user
+    await user.save();
+
+    // Set member limits based on plan
+    const memberLimits = {
+      starter: 5,
+      professional: 25,
+      enterprise: 1000 // Effectively unlimited
+    };
+
+    // Create subscription
+    const startDate = new Date();
+    const endDate = new Date(startDate);
+    endDate.setMonth(endDate.getMonth() + 1); // All packages valid for 1 month
+
+    const subscription = new Subscription({
+      plan,
+      status: 'active',
+      startDate,
+      endDate,
+      memberLimit: memberLimits[plan],
+      adminId: user._id
+    });
+
+    await subscription.save();
+
+    // Update user with subscription reference
+    user.subscription = subscription._id;
+    await user.save();
+
+    // Return user without password
+    const userObj = user.toObject();
+    delete userObj.password;
+
+    res.status(201).json({
+      message: 'Admin created successfully',
+      user: userObj,
+      subscription
+    });
+
+  } catch (error) {
+    console.error('Error creating admin:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// @route   DELETE /api/users/:id
+// @desc    Delete user (Super Admin only)
+// @access  Private (Super Admin)
+router.delete('/:id', [auth, authorize('super_admin')], async (req, res) => {
+  try {
+    // Don't allow deleting the main super admin
+    if (req.params.id === req.user.id) {
+      return res.status(400).json({ message: 'Cannot delete your own account' });
+    }
+
+    // Find and delete the user
+    const user = await User.findById(req.params.id);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // Don't allow deleting other super admins
+    if (user.role === 'super_admin') {
+      return res.status(403).json({ message: 'Cannot delete other super admins' });
+    }
+
+    // Delete the user's subscription if it exists
+    if (user.subscription) {
+      await Subscription.findByIdAndDelete(user.subscription);
+    }
+
+    // Delete the user
+    await User.findByIdAndDelete(req.params.id);
+
+    res.json({ message: 'User deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting user:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+module.exports = router;
