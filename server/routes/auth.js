@@ -3,6 +3,7 @@ const jwt = require('jsonwebtoken');
 const { body, validationResult } = require('express-validator');
 const User = require('../models/User');
 const Site = require('../models/Site');
+const Subscription = require('../models/Subscription');
 const { auth } = require('../middleware/auth');
 
 const router = express.Router();
@@ -125,6 +126,18 @@ router.post('/login', [
       return res.status(400).json({ message: 'Invalid credentials' });
     }
 
+    // If admin, enforce subscription validity (must be active and not expired)
+    if (user.role === 'admin') {
+      const sub = await Subscription.findOne({ adminId: user._id });
+      if (!sub) {
+        return res.status(403).json({ message: 'No active subscription found. Please contact support.' });
+      }
+      const now = new Date();
+      if (sub.status !== 'active' || (sub.endDate && new Date(sub.endDate) < now)) {
+        return res.status(403).json({ message: 'Subscription expired or inactive. Please renew to continue.' });
+      }
+    }
+
     // Update last login
     user.lastLogin = new Date();
     await user.save();
@@ -132,12 +145,14 @@ router.post('/login', [
     // Generate token
     const token = generateToken(user._id);
 
-    // Get site information
+    // Get site information and subscription details
     let siteInfo = null;
+    let subscription = null;
     if (user.role === 'admin') {
       // For admin, show first managed site's info including subscription
       const adminSite = await Site.findOne({ admin: user._id }).select('name address subscription');
       if (adminSite) siteInfo = adminSite;
+      subscription = await Subscription.findOne({ adminId: user._id }).select('plan status startDate endDate memberLimit');
     } else if (user.assignedSite) {
       siteInfo = await Site.findById(user.assignedSite).select('name address subscription');
     }
@@ -152,6 +167,7 @@ router.post('/login', [
         role: user.role,
         assignedSite: user.assignedSite,
         siteInfo,
+        subscription,
         lastLogin: user.lastLogin
       }
     });
@@ -173,15 +189,18 @@ router.get('/me', auth, async (req, res) => {
 
     // Get site information with subscription for gating
     let siteInfo = null;
+    let subscription = null;
     if (user.role === 'admin') {
       const adminSite = await Site.findOne({ admin: user._id }).select('name address subscription');
       if (adminSite) siteInfo = adminSite;
+      subscription = await Subscription.findOne({ adminId: user._id }).select('plan status startDate endDate memberLimit');
     } else if (user.assignedSite) {
       siteInfo = await Site.findById(user.assignedSite).select('name address subscription');
     }
 
     const userData = user.toJSON();
     userData.siteInfo = siteInfo;
+    userData.subscription = subscription;
 
     res.json({ user: userData });
   } catch (error) {
