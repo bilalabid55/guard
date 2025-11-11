@@ -1,5 +1,9 @@
 // Print service for visitor badges
 export const printBadge = (visitorData: any) => {
+  const qrData: string = visitorData.qrCode;
+  const qrImg = typeof qrData === 'string' && (qrData.startsWith('http') || qrData.startsWith('data:'))
+    ? qrData
+    : `https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=${encodeURIComponent(qrData || JSON.stringify({ visitorId: visitorData._id, badgeNumber: visitorData.badgeNumber }))}`;
   // Create a new window for printing
   const printWindow = window.open('', '_blank', 'width=600,height=800');
   
@@ -195,7 +199,7 @@ export const printBadge = (visitorData: any) => {
         <div class="main-content">
           <div class="qr-section">
             <div class="qr-code">
-              <img src="${visitorData.qrCode}" alt="QR Code" style="width: 100%; height: 100%; object-fit: contain;" />
+              <img src="${qrImg}" alt="QR Code" style="width: 100%; height: 100%; object-fit: contain;" />
             </div>
           </div>
           <div class="visitor-info">

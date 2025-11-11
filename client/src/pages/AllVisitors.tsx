@@ -360,7 +360,7 @@ const AllVisitors: React.FC = () => {
                   </TableRow>
                 ) : (
                   visitors.map((visitor) => (
-                    <TableRow key={visitor._id} hover onClick={() => handleMenuOpen({} as any, visitor)} sx={{ cursor: 'pointer' }}>
+                    <TableRow key={visitor._id} hover sx={{ cursor: 'default' }}>
                       <TableCell>
                         <Box>
                           <Typography variant="subtitle2">
@@ -470,11 +470,35 @@ const AllVisitors: React.FC = () => {
         }}>
           View Details
         </MenuItem>
-        <MenuItem onClick={() => {
-          if (selectedVisitor) {
-            printBadge(selectedVisitor);
+        <MenuItem onClick={async () => {
+          try {
+            if (!selectedVisitor) return;
+            const res = await axios.get(`/api/visitors/${selectedVisitor._id}`);
+            const v = res.data?.visitor || selectedVisitor;
+            // Ensure required fields for printing
+            const printable = {
+              fullName: v.fullName,
+              company: v.company,
+              badgeNumber: v.badgeNumber,
+              qrCode: v.qrCode || JSON.stringify({ visitorId: v._id, badgeNumber: v.badgeNumber }),
+              checkInTime: v.checkInTime,
+              accessPoint: {
+                name: v.accessPoint?.name || 'Main Gate',
+                type: v.accessPoint?.type || 'main_gate'
+              },
+              site: {
+                name: v.site?.name || 'Site',
+                address: v.site?.address || ''
+              },
+              specialAccess: v.specialAccess,
+              expectedDuration: v.expectedDuration || 4
+            };
+            printBadge(printable);
+          } catch (e) {
+            setError('Failed to prepare badge for printing');
+          } finally {
+            handleMenuClose();
           }
-          handleMenuClose();
         }}>
           Print Badge
         </MenuItem>

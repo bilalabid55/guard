@@ -58,6 +58,8 @@ router.get('/admins', [auth, authorize('super_admin')], async (req, res) => {
   } catch (error) {
     console.error('Error fetching admins:', error);
     res.status(500).json({ message: 'Server error' });
+  }
+});
 
 // @route   GET /api/admin/:id/details
 // @desc    Get admin details with subscription and first managed site
@@ -91,8 +93,6 @@ router.get('/:id/details', [auth, authorize('super_admin')], async (req, res) =>
   } catch (error) {
     console.error('Error fetching admin details:', error);
     res.status(500).json({ message: 'Server error' });
-  }
-});
   }
 });
 
@@ -147,15 +147,11 @@ router.post('/register-admin', [
     user = new User({
       fullName,
       email,
-      password,
+      password, // let pre-save hook hash this
       role: 'admin',
       isActive: true,
       emailVerified: true
     });
-
-    // Hash password
-    const salt = await bcrypt.genSalt(10);
-    user.password = await bcrypt.hash(password, salt);
 
     // Save user
     await user.save();
@@ -185,6 +181,32 @@ router.post('/register-admin', [
 
     // Update user with subscription reference
     user.subscription = subscription._id;
+    await user.save();
+
+    // Create a default site for this admin to enable tenant context and access points
+    const defaultSite = await Site.create({
+      name: `${fullName.split(' ')[0]}'s Site`,
+      address: 'Address not provided',
+      city: 'N/A',
+      state: 'N/A',
+      zipCode: '00000',
+      country: 'USA',
+      admin: user._id
+    });
+
+    // Create default access points for the site
+    const AccessPoint = require('../models/AccessPoint');
+    const defaultAccessPoints = [
+      { name: 'Main Gate', type: 'main_gate', site: defaultSite._id },
+      { name: 'Side Entrance', type: 'side_entrance', site: defaultSite._id },
+      { name: 'Loading Dock', type: 'loading_dock', site: defaultSite._id }
+    ];
+    for (const ap of defaultAccessPoints) {
+      await new AccessPoint(ap).save();
+    }
+
+    // Link site to admin's managedSites
+    user.managedSites = [defaultSite._id];
     await user.save();
 
     // Return user without password
