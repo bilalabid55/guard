@@ -10,9 +10,16 @@ require('dotenv').config();
 
 const app = express();
 const server = http.createServer(app);
+let allowedOrigins = [];
+// Will be initialized after app and CORS setup
 const io = socketIo(server, {
   cors: {
-    origin: process.env.CLIENT_URL || 'http://localhost:3000',
+    origin: (origin, callback) => {
+      if (!origin) return callback(null, true);
+      if (!allowedOrigins || allowedOrigins.length === 0) return callback(null, true);
+      if (allowedOrigins.includes(origin)) return callback(null, true);
+      return callback(null, false);
+    },
     methods: ['GET', 'POST'],
     credentials: true
   }
@@ -30,7 +37,7 @@ app.use(helmet({
 }));
 
 // CORS configuration - allow frontend domain
-const allowedOrigins = [
+allowedOrigins = [
   process.env.CLIENT_URL,
   'https://acsoguard.com',
   'http://localhost:3000'
@@ -146,6 +153,8 @@ app.use('/api/companies', require('./routes/companies'));
 app.use('/api/activities', require('./routes/activities'));
 app.use('/api/emergency', require('./routes/emergency'));
 app.use('/api/admin', require('./routes/admin'));
+// Alias notifications under activities router for convenience
+app.use('/api/notifications', require('./routes/activities'));
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
