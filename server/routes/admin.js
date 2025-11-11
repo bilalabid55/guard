@@ -314,4 +314,91 @@ router.post('/subscription/activate-by-email', [auth, authorize('super_admin')],
   }
 });
 
+// @route   GET /api/admin/:id/subscription
+// @desc    Get an admin's subscription (Super Admin only)
+// @access  Private (Super Admin)
+router.get('/:id/subscription', [auth, authorize('super_admin')], async (req, res) => {
+  try {
+    const admin = await User.findById(req.params.id);
+    if (!admin || admin.role !== 'admin') {
+      return res.status(404).json({ message: 'Admin user not found' });
+    }
+    const subscription = await Subscription.findOne({ adminId: admin._id });
+    if (!subscription) return res.status(404).json({ message: 'Subscription not found' });
+    res.json({ subscription });
+  } catch (error) {
+    console.error('Error fetching subscription:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// @route   PUT /api/admin/:id/subscription
+// @desc    Create/update an admin's subscription (Super Admin only)
+// @access  Private (Super Admin)
+router.put('/:id/subscription', [auth, authorize('super_admin')], async (req, res) => {
+  try {
+    const admin = await User.findById(req.params.id);
+    if (!admin || admin.role !== 'admin') {
+      return res.status(404).json({ message: 'Admin user not found' });
+    }
+
+    const { plan, status, startDate, endDate, memberLimit } = req.body || {};
+
+    const allowedPlans = ['starter', 'professional', 'enterprise'];
+    const update = {};
+    if (plan) {
+      if (!allowedPlans.includes(String(plan))) {
+        return res.status(400).json({ message: 'Invalid plan' });
+      }
+      update.plan = plan;
+    }
+    if (status) {
+      if (!['active', 'inactive', 'paused'].includes(String(status))) {
+        return res.status(400).json({ message: 'Invalid status' });
+      }
+      update.status = status;
+    }
+    if (memberLimit !== undefined) {
+      const num = Number(memberLimit);
+      if (!Number.isFinite(num) || num < 0) return res.status(400).json({ message: 'Invalid memberLimit' });
+      update.memberLimit = num;
+    }
+    if (startDate) {
+      const sd = new Date(startDate);
+      if (isNaN(sd.getTime())) return res.status(400).json({ message: 'Invalid startDate' });
+      update.startDate = sd;
+    }
+    if (endDate) {
+      const ed = new Date(endDate);
+      if (isNaN(ed.getTime())) return res.status(400).json({ message: 'Invalid endDate' });
+      update.endDate = ed;
+    }
+
+    let subscription = await Subscription.findOne({ adminId: admin._id });
+    if (!subscription) {
+      subscription = new Subscription({
+        adminId: admin._id,
+        plan: update.plan || 'starter',
+        status: update.status || 'active',
+        startDate: update.startDate || new Date(),
+        endDate: update.endDate || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+        memberLimit: update.memberLimit ?? 5
+      });
+    } else {
+      Object.assign(subscription, update);
+    }
+    await subscription.save();
+
+    if (!admin.subscription || String(admin.subscription) !== String(subscription._id)) {
+      admin.subscription = subscription._id;
+      await admin.save();
+    }
+
+    res.json({ message: 'Subscription saved', subscription });
+  } catch (error) {
+    console.error('Error updating subscription:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
 module.exports = router;
