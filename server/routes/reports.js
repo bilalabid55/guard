@@ -14,7 +14,16 @@ router.get('/visitor-summary', auth, authorize('admin', 'site_manager'), async (
   try {
     const { siteId, startDate, endDate } = req.query;
     const user = req.user;
-    const targetSiteId = siteId || user.assignedSite;
+    let targetSiteId = siteId || null;
+    if (!targetSiteId) {
+      if (user.role === 'admin') {
+        const Site = require('../models/Site');
+        const managed = await Site.findOne({ admin: user._id }).select('_id').sort({ createdAt: 1 });
+        targetSiteId = managed?._id || null;
+      } else {
+        targetSiteId = user.assignedSite || null;
+      }
+    }
 
     if (!targetSiteId) {
       return res.status(400).json({ message: 'Site ID is required' });
@@ -120,7 +129,16 @@ router.get('/incident-summary', auth, authorize('admin', 'site_manager'), async 
   try {
     const { siteId, startDate, endDate } = req.query;
     const user = req.user;
-    const targetSiteId = siteId || user.assignedSite;
+    let targetSiteId = siteId || null;
+    if (!targetSiteId) {
+      if (user.role === 'admin') {
+        const Site = require('../models/Site');
+        const managed = await Site.findOne({ admin: user._id }).select('_id').sort({ createdAt: 1 });
+        targetSiteId = managed?._id || null;
+      } else {
+        targetSiteId = user.assignedSite || null;
+      }
+    }
 
     if (!targetSiteId) {
       return res.status(400).json({ message: 'Site ID is required' });
@@ -211,7 +229,16 @@ router.get('/security-summary', auth, authorize('admin', 'site_manager'), async 
   try {
     const { siteId, startDate, endDate } = req.query;
     const user = req.user;
-    const targetSiteId = siteId || user.assignedSite;
+    let targetSiteId = siteId || null;
+    if (!targetSiteId) {
+      if (user.role === 'admin') {
+        const Site = require('../models/Site');
+        const managed = await Site.findOne({ admin: user._id }).select('_id').sort({ createdAt: 1 });
+        targetSiteId = managed?._id || null;
+      } else {
+        targetSiteId = user.assignedSite || null;
+      }
+    }
 
     if (!targetSiteId) {
       return res.status(400).json({ message: 'Site ID is required' });
@@ -278,7 +305,16 @@ router.get('/export', auth, authorize('admin', 'site_manager'), async (req, res)
   try {
     const { siteId, type, format = 'json', startDate, endDate } = req.query;
     const user = req.user;
-    const targetSiteId = siteId || user.assignedSite;
+    let targetSiteId = siteId || null;
+    if (!targetSiteId) {
+      if (user.role === 'admin') {
+        const Site = require('../models/Site');
+        const managed = await Site.findOne({ admin: user._id }).select('_id').sort({ createdAt: 1 });
+        targetSiteId = managed?._id || null;
+      } else {
+        targetSiteId = user.assignedSite || null;
+      }
+    }
 
     if (!targetSiteId) {
       return res.status(400).json({ message: 'Site ID is required' });
