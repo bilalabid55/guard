@@ -100,7 +100,9 @@ const AllVisitors: React.FC = () => {
         ]);
         setCompanies(compRes.data?.companies || []);
         setAccessPoints(apRes.data?.accessPoints || []);
-      } catch {}
+      } catch (e: any) {
+        setError(e?.response?.data?.message || 'Failed to load filter options');
+      }
     };
     fetchFilters();
   }, []);
@@ -200,7 +202,6 @@ const AllVisitors: React.FC = () => {
 
   const handleMenuClose = () => {
     setAnchorEl(null);
-    setSelectedVisitor(null);
   };
 
   return (
