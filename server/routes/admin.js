@@ -191,7 +191,13 @@ router.post('/register-admin', [
       state: 'N/A',
       zipCode: '00000',
       country: 'USA',
-      admin: user._id
+      admin: user._id,
+      subscription: {
+        status: 'active',
+        plan,
+        startDate,
+        endDate
+      }
     });
 
     // Create default access points for the site

@@ -160,6 +160,17 @@ router.post('/login', [
           return res.status(403).json({ message: 'Subscription expired or inactive. Please renew to continue.' });
         }
       }
+
+      // Keep site's embedded subscription status in sync for UI
+      const adminSite = await Site.findOne({ admin: user._id });
+      if (adminSite) {
+        adminSite.subscription = adminSite.subscription || {};
+        adminSite.subscription.status = 'active';
+        adminSite.subscription.plan = sub.plan;
+        adminSite.subscription.startDate = sub.startDate;
+        adminSite.subscription.endDate = sub.endDate;
+        await adminSite.save();
+      }
     }
 
     // Update last login
