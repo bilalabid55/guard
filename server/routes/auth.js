@@ -128,13 +128,37 @@ router.post('/login', [
 
     // If admin, enforce subscription validity (must be active and not expired)
     if (user.role === 'admin') {
-      const sub = await Subscription.findOne({ adminId: user._id });
+      let sub = await Subscription.findOne({ adminId: user._id });
+      const isTestAdmin = !!process.env.TEST_ADMIN_EMAIL && email === process.env.TEST_ADMIN_EMAIL.toLowerCase();
       if (!sub) {
-        return res.status(403).json({ message: 'No active subscription found. Please contact support.' });
+        if (isTestAdmin) {
+          const startDate = new Date();
+          const endDate = new Date(startDate);
+          endDate.setMonth(endDate.getMonth() + 12);
+          sub = await Subscription.create({
+            plan: 'enterprise',
+            status: 'active',
+            startDate,
+            endDate,
+            memberLimit: 1000,
+            adminId: user._id
+          });
+        } else {
+          return res.status(403).json({ message: 'No active subscription found. Please contact support.' });
+        }
       }
       const now = new Date();
       if (sub.status !== 'active' || (sub.endDate && new Date(sub.endDate) < now)) {
-        return res.status(403).json({ message: 'Subscription expired or inactive. Please renew to continue.' });
+        if (isTestAdmin) {
+          // Refresh/force activate test admin subscription
+          sub.status = 'active';
+          const newEnd = new Date();
+          newEnd.setMonth(newEnd.getMonth() + 12);
+          sub.endDate = newEnd;
+          await sub.save();
+        } else {
+          return res.status(403).json({ message: 'Subscription expired or inactive. Please renew to continue.' });
+        }
       }
     }
 
