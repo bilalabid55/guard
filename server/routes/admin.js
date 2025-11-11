@@ -5,6 +5,7 @@ const { check, validationResult } = require('express-validator');
 const { auth, authorize } = require('../middleware/auth');
 const User = require('../models/User');
 const Subscription = require('../models/Subscription');
+const Site = require('../models/Site');
 
 // @route   GET /api/admin/admins
 // @desc    Get all admins with their subscription details (Super Admin only)
@@ -56,6 +57,61 @@ router.get('/admins', [auth, authorize('super_admin')], async (req, res) => {
     res.json(result);
   } catch (error) {
     console.error('Error fetching admins:', error);
+    res.status(500).json({ message: 'Server error' });
+
+// @route   GET /api/admin/:id/details
+// @desc    Get admin details with subscription and first managed site
+// @access  Private (Super Admin)
+router.get('/:id/details', [auth, authorize('super_admin')], async (req, res) => {
+  try {
+    const admin = await User.findById(req.params.id)
+      .select('fullName email role isActive createdAt updatedAt');
+    if (!admin || admin.role !== 'admin') {
+      return res.status(404).json({ message: 'Admin not found' });
+    }
+
+    const subscription = await Subscription.findOne({ adminId: admin._id })
+      .select('plan status startDate endDate memberLimit');
+
+    const site = await Site.findOne({ admin: admin._id })
+      .select('name address city state zipCode country');
+
+    res.json({
+      admin: {
+        id: admin._id,
+        fullName: admin.fullName,
+        email: admin.email,
+        isActive: admin.isActive,
+        createdAt: admin.createdAt,
+        updatedAt: admin.updatedAt
+      },
+      subscription,
+      site
+    });
+  } catch (error) {
+    console.error('Error fetching admin details:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+  }
+});
+
+// @route   PUT /api/admin/:id/activate
+// @desc    Activate/deactivate an admin user (Super Admin only)
+// @access  Private (Super Admin)
+router.put('/:id/activate', [auth, authorize('super_admin')], async (req, res) => {
+  try {
+    const { isActive } = req.body;
+    const user = await User.findById(req.params.id);
+    if (!user) return res.status(404).json({ message: 'User not found' });
+    if (user.role !== 'admin') return res.status(400).json({ message: 'Target user is not an admin' });
+    if (user._id.toString() === req.user.id) return res.status(400).json({ message: 'Cannot change your own status' });
+
+    user.isActive = !!isActive;
+    await user.save();
+    res.json({ message: `Admin ${isActive ? 'activated' : 'deactivated'} successfully` });
+  } catch (error) {
+    console.error('Error toggling admin status:', error);
     res.status(500).json({ message: 'Server error' });
   }
 });

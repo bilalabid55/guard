@@ -101,7 +101,7 @@ router.get('/debug/all', auth, async (req, res) => {
 // @access  Private (Admin, Site Manager, Security Guard, Receptionist)
 router.get('/', auth, authorize('admin', 'site_manager', 'security_guard', 'receptionist'), async (req, res) => {
   try {
-    const { siteId, status, page = 1, limit = 10, search } = req.query;
+    const { siteId, status, page = 1, limit = 10, search, company, accessPoint, date } = req.query;
     const user = req.user;
 
     console.log('GET /api/visitors - User:', { 
@@ -133,6 +133,15 @@ router.get('/', auth, authorize('admin', 'site_manager', 'security_guard', 'rece
     const query = { site: { $in: siteFilter } };
     console.log('Query filter:', JSON.stringify({ site: { $in: siteFilter.map(s => s.toString()) } }));
     if (status) query.status = status;
+    if (company) query.company = { $regex: company, $options: 'i' };
+    if (accessPoint) query.accessPoint = accessPoint;
+    if (date) {
+      const d = new Date(date);
+      d.setHours(0,0,0,0);
+      const dEnd = new Date(d);
+      dEnd.setDate(dEnd.getDate() + 1);
+      query.checkInTime = { $gte: d, $lt: dEnd };
+    }
     if (search) {
       query.$or = [
         { fullName: { $regex: search, $options: 'i' } },

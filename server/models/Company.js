@@ -19,6 +19,10 @@ const companySchema = new mongoose.Schema({
       required: true,
       trim: true
     },
+    contactPerson: {
+      type: String,
+      trim: true
+    },
     website: {
       type: String,
       trim: true

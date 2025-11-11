@@ -262,5 +262,36 @@ router.get('/:id/stats', auth, async (req, res) => {
   }
 });
 
+// @route   GET /api/sites/access-points
+// @desc    Get active access points for current user's site context
+// @access  Private
+router.get('/access-points', auth, async (req, res) => {
+  try {
+    const user = req.user;
+    let siteIds = [];
+
+    if (user.role === 'admin') {
+      const sites = await Site.find({ admin: user._id }).select('_id');
+      siteIds = sites.map(s => s._id);
+    } else if (user.assignedSite) {
+      siteIds = [user.assignedSite];
+    }
+
+    if (siteIds.length === 0) {
+      return res.json({ accessPoints: [] });
+    }
+
+    const accessPoints = await AccessPoint.find({
+      site: { $in: siteIds },
+      isActive: true
+    }).select('name site');
+
+    res.json({ accessPoints });
+  } catch (error) {
+    console.error('Get access points (context) error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
 module.exports = router;
 

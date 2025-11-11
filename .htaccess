@@ -1,0 +1,32 @@
+# Apache Configuration for SiteGround
+# This file should be placed in your public_html directory
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    
+    # Enable proxy module (may need to be enabled by SiteGround)
+    # ProxyPreserveHost On
+    
+    # Proxy Socket.io requests (WebSocket support)
+    RewriteCond %{REQUEST_URI} ^/socket.io [NC]
+    RewriteCond %{HTTP:Upgrade} =websocket [NC]
+    RewriteRule ^(.*)$ http://localhost:5000/$1 [P,L]
+    
+    RewriteCond %{REQUEST_URI} ^/socket.io [NC]
+    RewriteRule ^(.*)$ http://localhost:5000/$1 [P,L]
+    
+    # Proxy API requests
+    RewriteCond %{REQUEST_URI} ^/api [NC]
+    RewriteRule ^(.*)$ http://localhost:5000/$1 [P,L]
+    
+    # Proxy all other requests to Node.js (for React SPA)
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteRule ^(.*)$ http://localhost:5000/$1 [P,L]
+</IfModule>
+
+# If mod_proxy is not available, you may need to contact SiteGround support
+# Alternative: Use a subdomain like api.yourdomain.com for the Node.js server
+
+
+
