@@ -261,4 +261,57 @@ router.delete('/:id', [auth, authorize('super_admin')], async (req, res) => {
   }
 });
 
+// @route   POST /api/admin/subscription/activate-by-email
+// @desc    Force-activate or create a subscription for an admin by email (Super Admin only)
+// @access  Private (Super Admin)
+router.post('/subscription/activate-by-email', [auth, authorize('super_admin')], async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (!email || typeof email !== 'string') {
+      return res.status(400).json({ message: 'Valid email is required' });
+    }
+
+    const normalizedEmail = email.trim().toLowerCase();
+    const admin = await User.findOne({ email: normalizedEmail, role: 'admin' });
+    if (!admin) {
+      return res.status(404).json({ message: 'Admin user not found' });
+    }
+
+    let subscription = await Subscription.findOne({ adminId: admin._id });
+    const startDate = new Date();
+    const endDate = new Date();
+    endDate.setMonth(endDate.getMonth() + 12);
+
+    if (!subscription) {
+      subscription = new Subscription({
+        plan: 'enterprise',
+        status: 'active',
+        startDate,
+        endDate,
+        memberLimit: 1000,
+        adminId: admin._id
+      });
+    } else {
+      subscription.status = 'active';
+      if (!subscription.startDate) subscription.startDate = startDate;
+      subscription.endDate = endDate;
+      if (!subscription.plan) subscription.plan = 'enterprise';
+      if (!subscription.memberLimit) subscription.memberLimit = 1000;
+    }
+
+    await subscription.save();
+
+    // Link on user if missing
+    if (!admin.subscription || String(admin.subscription) !== String(subscription._id)) {
+      admin.subscription = subscription._id;
+      await admin.save();
+    }
+
+    res.json({ message: 'Subscription activated successfully', subscription });
+  } catch (error) {
+    console.error('Error activating subscription by email:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
 module.exports = router;
