@@ -7,11 +7,14 @@ import DashboardIcon from '@mui/icons-material/Dashboard';
 import { styled } from '@mui/material/styles';
 
 const HeroSection = styled(Box)(({ theme }) => ({
-  backgroundColor: theme.palette.primary.main,
+  position: 'relative',
   color: theme.palette.primary.contrastText,
-  padding: theme.spacing(8, 0),
+  padding: theme.spacing(12, 0),
   textAlign: 'center',
   marginBottom: theme.spacing(8),
+  backgroundImage: `linear-gradient(rgba(14,27,51,0.7), rgba(14,27,51,0.7)), url('https://images.unsplash.com/photo-1532635223-6cc8d45f647f?q=80&w=1920&auto=format&fit=crop')`,
+  backgroundSize: 'cover',
+  backgroundPosition: 'center',
 }));
 
 const FeatureCard = styled(Card)(({ theme }) => ({
@@ -32,10 +35,10 @@ const Home: React.FC = () => {
       <HeroSection>
         <Container maxWidth="md">
           <Typography variant="h2" component="h1" gutterBottom>
-            AcsoGuard - Construction Site Security Management
+            AcsoGuard
           </Typography>
           <Typography variant="h5" gutterBottom>
-            Secure, efficient, and reliable visitor management for construction sites
+            Modern visitor and access management for construction sites
           </Typography>
           <Box sx={{ mt: 4 }}>
             <Button 
@@ -73,8 +76,11 @@ const Home: React.FC = () => {
                 <SecurityIcon color="primary" sx={{ fontSize: 60, mb: 2 }} />
                 <Typography variant="h5" gutterBottom>Secure Access Control</Typography>
                 <Typography>
-                  Manage and monitor all site access points with our advanced security features.
+                  Manage and monitor all site access points with advanced, role-based security.
                 </Typography>
+                <Box mt={2}>
+                  <img alt="Turnstile access" src="https://images.unsplash.com/photo-1581093588401-16c62a06157a?q=80&w=1200&auto=format&fit=crop" style={{ width: '100%', borderRadius: 12, objectFit: 'cover', maxHeight: 160 }} />
+                </Box>
               </CardContent>
             </FeatureCard>
           </Grid>
@@ -84,8 +90,11 @@ const Home: React.FC = () => {
                 <GroupIcon color="primary" sx={{ fontSize: 60, mb: 2 }} />
                 <Typography variant="h5" gutterBottom>Visitor Management</Typography>
                 <Typography>
-                  Streamline visitor check-ins, check-outs, and access permissions.
+                  Streamline visitor check-ins, check-outs, badges and permissions.
                 </Typography>
+                <Box mt={2}>
+                  <img alt="Visitors at site" src="https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?q=80&w=1200&auto=format&fit=crop" style={{ width: '100%', borderRadius: 12, objectFit: 'cover', maxHeight: 160 }} />
+                </Box>
               </CardContent>
             </FeatureCard>
           </Grid>
@@ -95,8 +104,11 @@ const Home: React.FC = () => {
                 <DashboardIcon color="primary" sx={{ fontSize: 60, mb: 2 }} />
                 <Typography variant="h5" gutterBottom>Real-time Dashboard</Typography>
                 <Typography>
-                  Get real-time updates and analytics about your site's security status.
+                  Real-time updates and analytics about your site's security status.
                 </Typography>
+                <Box mt={2}>
+                  <img alt="Analytics dashboard" src="https://images.unsplash.com/photo-1551281044-8b59a9a17fe0?q=80&w=1200&auto=format&fit=crop" style={{ width: '100%', borderRadius: 12, objectFit: 'cover', maxHeight: 160 }} />
+                </Box>
               </CardContent>
             </FeatureCard>
           </Grid>
@@ -200,6 +212,27 @@ const Home: React.FC = () => {
                 </CardContent>
               </FeatureCard>
             </Grid>
+          </Grid>
+        </Container>
+      </Box>
+
+      {/* Gallery / Social Proof */}
+      <Box bgcolor="background.paper" py={8}>
+        <Container maxWidth="lg">
+          <Typography variant="h3" align="center" gutterBottom>
+            Trusted on real sites
+          </Typography>
+          <Grid container spacing={2} sx={{ mt: 2 }}>
+            {[ 
+              'https://images.unsplash.com/photo-1483721310020-03333e577078?q=80&w=800&auto=format&fit=crop',
+              'https://images.unsplash.com/photo-1523875194681-bedd468c58bf?q=80&w=800&auto=format&fit=crop',
+              'https://images.unsplash.com/photo-1496307042754-b4aa456c4a2d?q=80&w=800&auto=format&fit=crop',
+              'https://images.unsplash.com/photo-1436262513933-a0b06755c784?q=80&w=800&auto=format&fit=crop',
+            ].map((src, idx) => (
+              <Grid item xs={6} md={3} key={idx}>
+                <Box component="img" src={src} alt={`gallery-${idx}`} sx={{ width: '100%', height: 180, objectFit: 'cover', borderRadius: 2 }} />
+              </Grid>
+            ))}
           </Grid>
         </Container>
       </Box>

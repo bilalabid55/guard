@@ -16,7 +16,7 @@ const generateToken = (id) => {
 };
 
 // @route   POST /api/auth/register
-// @desc    Public self-registration: creates an Admin and a Site
+// @desc    Public self-registration: creates an Admin, Site, and trial Subscription
 // @access  Public
 router.post('/register', [
   body('fullName').notEmpty().withMessage('Full name is required'),
@@ -31,7 +31,7 @@ router.post('/register', [
       return res.status(400).json({ errors: errors.array() });
     }
 
-    const { fullName, email, password, phone, address, siteName, siteAddress } = req.body;
+    const { fullName, email, password, phone, address, siteName, siteAddress, plan } = req.body;
 
     // Check if user already exists
     const existingUser = await User.findOne({ email });
@@ -60,16 +60,36 @@ router.post('/register', [
       state: 'N/A',
       zipCode: '00000',
       country: 'USA',
-      admin: user._id,
-      subscription: {
-        status: (process.env.TEST_ADMIN_EMAIL && email.toLowerCase() === process.env.TEST_ADMIN_EMAIL.toLowerCase()) ? 'active' : 'inactive',
-        plan: 'basic'
-      }
+      admin: user._id
     });
 
-    // Link site to admin as managed site
+    // Create a 30-day trial subscription and link to user
+    const Subscription = require('../models/Subscription');
+    const startDate = new Date();
+    const endDate = new Date(startDate);
+    endDate.setDate(endDate.getDate() + 30);
+    const memberLimits = { starter: 5, professional: 25, enterprise: 1000 };
+    const selectedPlan = ['starter','professional','enterprise'].includes(String(plan)) ? plan : 'starter';
+    const subscription = await Subscription.create({
+      plan: selectedPlan,
+      status: 'active',
+      startDate,
+      endDate,
+      memberLimit: memberLimits[selectedPlan],
+      adminId: user._id
+    });
+    user.subscription = subscription._id;
     user.managedSites = [site._id];
     await user.save();
+
+    // Sync site's embedded subscription for UI
+    site.subscription = {
+      status: 'active',
+      plan: selectedPlan,
+      startDate,
+      endDate
+    };
+    await site.save();
 
     // Generate token
     const token = generateToken(user._id);
@@ -128,44 +148,20 @@ router.post('/login', [
 
     // If admin, enforce subscription validity (must be active and not expired)
     if (user.role === 'admin') {
-      let sub = await Subscription.findOne({ adminId: user._id });
-      const isTestAdmin = !!process.env.TEST_ADMIN_EMAIL && email === process.env.TEST_ADMIN_EMAIL.toLowerCase();
+      const sub = await Subscription.findOne({ adminId: user._id });
       if (!sub) {
-        if (isTestAdmin) {
-          const startDate = new Date();
-          const endDate = new Date(startDate);
-          endDate.setMonth(endDate.getMonth() + 12);
-          sub = await Subscription.create({
-            plan: 'enterprise',
-            status: 'active',
-            startDate,
-            endDate,
-            memberLimit: 1000,
-            adminId: user._id
-          });
-        } else {
-          return res.status(403).json({ message: 'No active subscription found. Please contact support.' });
-        }
+        return res.status(403).json({ message: 'No active subscription found. Please contact support.' });
       }
       const now = new Date();
       if (sub.status !== 'active' || (sub.endDate && new Date(sub.endDate) < now)) {
-        if (isTestAdmin) {
-          // Refresh/force activate test admin subscription
-          sub.status = 'active';
-          const newEnd = new Date();
-          newEnd.setMonth(newEnd.getMonth() + 12);
-          sub.endDate = newEnd;
-          await sub.save();
-        } else {
-          return res.status(403).json({ message: 'Subscription expired or inactive. Please renew to continue.' });
-        }
+        return res.status(403).json({ message: 'Subscription expired or inactive. Please renew to continue.' });
       }
 
-      // Keep site's embedded subscription status in sync for UI
+      // Sync site's embedded subscription for UI (reflect actual status)
       const adminSite = await Site.findOne({ admin: user._id });
       if (adminSite) {
         adminSite.subscription = adminSite.subscription || {};
-        adminSite.subscription.status = 'active';
+        adminSite.subscription.status = sub.status;
         adminSite.subscription.plan = sub.plan;
         adminSite.subscription.startDate = sub.startDate;
         adminSite.subscription.endDate = sub.endDate;

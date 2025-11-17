@@ -370,10 +370,67 @@ router.get('/export', auth, authorize('admin', 'site_manager'), async (req, res)
     }
 
     if (format === 'csv') {
-      // In a real implementation, you would convert to CSV format
-      res.setHeader('Content-Type', 'text/csv');
+      // Build CSV content for requested type
+      let rows = [];
+      let headers = [];
+      const toCsv = (items, cols) => {
+        const escape = (v) => {
+          if (v === null || v === undefined) return '';
+          const s = String(v).replace(/"/g, '""');
+          return /[",\n]/.test(s) ? `"${s}"` : s;
+        };
+        const head = cols.join(',');
+        const body = items.map(it => cols.map(c => escape(it[c])).join(',')).join('\n');
+        return head + '\n' + body + '\n';
+      };
+
+      switch (type) {
+        case 'visitors': {
+          const list = (data.visitors || []).map(v => ({
+            name: v.name || v.fullName || '',
+            company: v.company || '',
+            status: v.status || '',
+            checkInTime: v.checkInTime ? new Date(v.checkInTime).toISOString() : '',
+            checkOutTime: v.checkOutTime ? new Date(v.checkOutTime).toISOString() : '',
+            accessPoint: v.accessPoint?.name || '',
+            checkedInBy: v.checkedInBy?.fullName || '',
+            checkedOutBy: v.checkedOutBy?.fullName || ''
+          }));
+          headers = ['name','company','status','checkInTime','checkOutTime','accessPoint','checkedInBy','checkedOutBy'];
+          rows = list;
+          break;
+        }
+        case 'incidents': {
+          const list = (data.incidents || []).map(i => ({
+            title: i.title || '',
+            type: i.type || '',
+            severity: i.severity || '',
+            reportedDate: i.reportedDate ? new Date(i.reportedDate).toISOString() : '',
+            reportedBy: i.reportedBy?.fullName || '',
+            status: i.status || ''
+          }));
+          headers = ['title','type','severity','reportedDate','reportedBy','status'];
+          rows = list;
+          break;
+        }
+        case 'banned': {
+          const list = (data.bannedVisitors || []).map(b => ({
+            name: b.name || b.fullName || '',
+            reason: b.reason || '',
+            bannedDate: b.bannedDate ? new Date(b.bannedDate).toISOString() : '',
+            bannedBy: b.bannedBy?.fullName || ''
+          }));
+          headers = ['name','reason','bannedDate','bannedBy'];
+          rows = list;
+          break;
+        }
+      }
+
+      const csv = rows.length ? toCsv(rows, headers) : headers.join(',') + '\n';
+      res.setHeader('Content-Type', 'text/csv; charset=utf-8');
       res.setHeader('Content-Disposition', `attachment; filename="${type}-report-${Date.now()}.csv"`);
-      res.send(JSON.stringify(data, null, 2));
+      // Prepend BOM to ensure Excel opens UTF-8 correctly
+      res.send('\uFEFF' + csv);
     } else {
       res.json(data);
     }
