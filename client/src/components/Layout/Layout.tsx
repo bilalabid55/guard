@@ -62,6 +62,10 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   const [alertsAnchorEl, setAlertsAnchorEl] = useState<null | HTMLElement>(null);
   const [unreadCount, setUnreadCount] = useState<number>(0);
   const [recentAlerts, setRecentAlerts] = useState<Array<{ _id: string; title?: string; message?: string; createdAt?: string; isRead?: boolean }>>([]);
+  const [siteStats, setSiteStats] = useState<{ currentlyOnSite: number; todaysTotal: number }>({
+    currentlyOnSite: 0,
+    todaysTotal: 0,
+  });
 
   const openAlertsMenu = (e: React.MouseEvent<HTMLElement>) => {
     setAlertsAnchorEl(e.currentTarget);
@@ -91,6 +95,23 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
 
   useEffect(() => {
     fetchAlerts();
+  }, []);
+
+  useEffect(() => {
+    const fetchSiteStats = async () => {
+      try {
+        const res = await axios.get('/api/visitors/stats/dashboard');
+        const data = res.data || {};
+        setSiteStats({
+          currentlyOnSite: data.currentlyOnSite || 0,
+          todaysTotal: data.todaysTotal || 0,
+        });
+      } catch (e) {
+        // keep defaults on error
+      }
+    };
+
+    fetchSiteStats();
   }, []);
 
   const handleDrawerToggle = () => {
@@ -135,7 +156,6 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     <Box>
       <Toolbar>
         <Box display="flex" alignItems="center" sx={{ width: '100%' }}>
-          <Box component="img" src="/acsoguard.png" alt="ACSOGUARD" sx={{ height: 32, mr: 1, display: 'inline-block' }} />
           <Typography variant="h6" noWrap component="div" color="primary">
             AcsoGuard
           </Typography>
@@ -168,10 +188,10 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
           Site Status
         </Typography>
         <Typography variant="h6" color="success.main">
-          On Site: 0
+          On Site: {siteStats.currentlyOnSite}
         </Typography>
         <Typography variant="body2" color="text.secondary">
-          Today's Total: 0
+          Today's Total: {siteStats.todaysTotal}
         </Typography>
       </Box>
     </Box>

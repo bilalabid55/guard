@@ -1,9 +1,12 @@
 import axios from 'axios';
 
 // Create axios instance with base configuration
+// On localhost, always use the local backend and ignore REACT_APP_API_URL to avoid accidentally hitting Render.
 const apiEnv = process.env.REACT_APP_API_URL;
-const defaultApi = 'https://guard-ujfi.onrender.com/api';
-const apiBase = apiEnv || defaultApi;
+const isLocalhost = typeof window !== 'undefined' && window.location.hostname === 'localhost';
+const apiBase = isLocalhost
+  ? 'http://localhost:5000/api'
+  : (apiEnv || 'http://localhost:5000/api');
 const serviceRoot = apiBase.endsWith('/api') ? apiBase.slice(0, -4) : apiBase;
 
 const api = axios.create({

@@ -37,6 +37,7 @@ import {
 } from '@mui/icons-material';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from 'recharts';
 import axios from 'axios';
+import { useAuth } from '../contexts/AuthContext';
 
 interface BannedVisitor {
   _id: string;
@@ -44,7 +45,7 @@ interface BannedVisitor {
   company: string;
   reason: string;
   bannedDate: string;
-  bannedBy: string;
+  bannedBy: any;
   isActive: boolean;
   expiryDate?: string;
 }
@@ -52,6 +53,8 @@ interface BannedVisitor {
 const BannedList: React.FC = () => {
   const [bannedVisitors, setBannedVisitors] = useState<BannedVisitor[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
   const [createDialog, setCreateDialog] = useState(false);
   const [editDialog, setEditDialog] = useState(false);
   const [selectedVisitor, setSelectedVisitor] = useState<BannedVisitor | null>(null);
@@ -63,6 +66,13 @@ const BannedList: React.FC = () => {
     expiryDate: ''
   });
 
+  const { user } = useAuth();
+
+  const getCurrentSiteId = () => {
+    const anyUser: any = user as any;
+    return anyUser?.siteInfo?._id || anyUser?.assignedSite || '';
+  };
+
   useEffect(() => {
     fetchBannedVisitors();
   }, []);
@@ -70,59 +80,67 @@ const BannedList: React.FC = () => {
   const fetchBannedVisitors = async () => {
     try {
       setLoading(true);
-      // Mock data for now
-      const mockBannedVisitors: BannedVisitor[] = [
-        {
-          _id: '1',
-          fullName: 'John Smith',
-          company: 'ABC Construction',
-          reason: 'Safety Violations',
-          bannedDate: '2024-01-15',
-          bannedBy: 'Site Manager',
-          isActive: true
-        },
-        {
-          _id: '2',
-          fullName: 'Jane Doe',
-          company: 'XYZ Corp',
-          reason: 'Unauthorized Access',
-          bannedDate: '2024-01-10',
-          bannedBy: 'Security Guard',
-          isActive: true
-        },
-        {
-          _id: '3',
-          fullName: 'Mike Johnson',
-          company: 'Safety First',
-          reason: 'Repeated Violations',
-          bannedDate: '2024-01-05',
-          bannedBy: 'Admin',
-          isActive: true
-        }
-      ];
-      setBannedVisitors(mockBannedVisitors);
+      const siteId = getCurrentSiteId();
+      if (!siteId) {
+        setError('Site is not configured for this user');
+        setLoading(false);
+        return;
+      }
+
+      const [listRes, statsRes] = await Promise.all([
+        axios.get('/api/banned-visitors', {
+          params: { siteId, page: 1, limit: 100 }
+        }),
+        axios.get('/api/banned-visitors/stats/dashboard', {
+          params: { siteId }
+        })
+      ]);
+
+      const list = (listRes.data?.bannedVisitors || []) as BannedVisitor[];
+      setBannedVisitors(list);
+
+      // Update stats cards from real data
+      const stats = statsRes.data || {};
+      setStats({
+        totalBanned: stats.totalBanned || 0,
+        bansThisMonth: stats.bansThisMonth || 0,
+        pendingReview: stats.pendingReview || 0,
+        uniqueReasons: stats.uniqueReasons || 0,
+      });
     } catch (error) {
       console.error('Error fetching banned visitors:', error);
+      setError('Failed to load banned visitors');
     } finally {
       setLoading(false);
     }
   };
 
+  const [stats, setStats] = useState({
+    totalBanned: 0,
+    bansThisMonth: 0,
+    pendingReview: 0,
+    uniqueReasons: 0,
+  });
+
   const handleCreateBannedVisitor = async () => {
     try {
-      // Mock API call
-      const newBannedVisitor: BannedVisitor = {
-        _id: Date.now().toString(),
+      const siteId = getCurrentSiteId();
+      if (!siteId) {
+        setError('Site is not configured for this user');
+        return;
+      }
+
+      await axios.post('/api/banned-visitors', {
         fullName: formData.fullName,
         company: formData.company,
         reason: formData.reason,
-        bannedDate: new Date().toISOString().split('T')[0],
-        bannedBy: 'Current User',
-        isActive: true,
-        expiryDate: formData.expiryDate
-      };
-      
-      setBannedVisitors([...bannedVisitors, newBannedVisitor]);
+        description: formData.description,
+        site: siteId,
+        expiryDate: formData.expiryDate || undefined,
+      });
+
+      setSuccess('Visitor added to banned list successfully');
+      await fetchBannedVisitors();
       setCreateDialog(false);
       setFormData({
         fullName: '',
@@ -140,26 +158,33 @@ const BannedList: React.FC = () => {
     if (!selectedVisitor) return;
     
     try {
-      // Mock API call
-      const updatedBannedVisitors = bannedVisitors.map(visitor =>
-        visitor._id === selectedVisitor._id
-          ? { ...visitor, ...formData }
-          : visitor
-      );
-      setBannedVisitors(updatedBannedVisitors);
+      await axios.put(`/api/banned-visitors/${selectedVisitor._id}`, {
+        fullName: formData.fullName,
+        company: formData.company,
+        reason: formData.reason,
+        description: formData.description,
+        expiryDate: formData.expiryDate || undefined,
+      });
+
+      setSuccess('Banned visitor updated successfully');
+      await fetchBannedVisitors();
       setEditDialog(false);
       setSelectedVisitor(null);
     } catch (error) {
       console.error('Error updating banned visitor:', error);
+      setError('Failed to update banned visitor');
     }
   };
 
   const handleDeleteBannedVisitor = async (visitorId: string) => {
     if (window.confirm('Are you sure you want to remove this visitor from the banned list?')) {
       try {
-        setBannedVisitors(bannedVisitors.filter(visitor => visitor._id !== visitorId));
+        await axios.delete(`/api/banned-visitors/${visitorId}`);
+        setSuccess('Visitor removed from banned list successfully');
+        await fetchBannedVisitors();
       } catch (error) {
         console.error('Error deleting banned visitor:', error);
+        setError('Failed to remove banned visitor');
       }
     }
   };
@@ -177,24 +202,35 @@ const BannedList: React.FC = () => {
     }
   };
 
-  // Mock data for charts
-  const bannedByCompanyData = [
-    { name: 'ABC Construction', count: 2 },
-    { name: 'XYZ Corp', count: 1 },
-    { name: 'Safety First', count: 1 },
-  ];
+  // Simple derived data for charts based on current list (local only)
+  const bannedByCompanyData = Object.values(
+    bannedVisitors.reduce((acc: any, v) => {
+      const key = v.company || 'Unknown';
+      acc[key] = acc[key] || { name: key, count: 0 };
+      acc[key].count += 1;
+      return acc;
+    }, {})
+  );
 
-  const banReasonsData = [
-    { name: 'Safety Violations', count: 2 },
-    { name: 'Unauthorized Access', count: 1 },
-    { name: 'Repeated Violations', count: 1 },
-  ];
+  const banReasonsData = Object.values(
+    bannedVisitors.reduce((acc: any, v) => {
+      const key = v.reason || 'Other';
+      acc[key] = acc[key] || { name: key, count: 0 };
+      acc[key].count += 1;
+      return acc;
+    }, {})
+  );
 
-  const bansByMonthData = [
-    { month: 'Jan 2024', count: 3 },
-    { month: 'Dec 2023', count: 2 },
-    { month: 'Nov 2023', count: 1 },
-  ];
+  const bansByMonthData = Object.values(
+    bannedVisitors.reduce((acc: any, v) => {
+      if (!v.bannedDate) return acc;
+      const d = new Date(v.bannedDate);
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+      acc[key] = acc[key] || { month: key, count: 0 };
+      acc[key].count += 1;
+      return acc;
+    }, {})
+  );
 
   return (
     <Box>
@@ -217,6 +253,18 @@ const BannedList: React.FC = () => {
         </Button>
       </Box>
 
+      {success && (
+        <Alert severity="success" sx={{ mb: 2 }} onClose={() => setSuccess('')}>
+          {success}
+        </Alert>
+      )}
+
+      {error && (
+        <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError('')}>
+          {error}
+        </Alert>
+      )}
+
       {/* Stats Cards */}
       <Grid container spacing={3} sx={{ mb: 3 }}>
         <Grid item xs={12} sm={6} md={3}>
@@ -225,7 +273,7 @@ const BannedList: React.FC = () => {
               <Box display="flex" alignItems="center">
                 <BlockIcon sx={{ fontSize: 40, color: 'error.main', mr: 2 }} />
                 <Box>
-                  <Typography variant="h4">9</Typography>
+                  <Typography variant="h4">{stats.totalBanned}</Typography>
                   <Typography variant="body2" color="text.secondary">
                     Total Banned Individuals
                   </Typography>
@@ -240,7 +288,7 @@ const BannedList: React.FC = () => {
               <Box display="flex" alignItems="center">
                 <WarningIcon sx={{ fontSize: 40, color: 'warning.main', mr: 2 }} />
                 <Box>
-                  <Typography variant="h4">0</Typography>
+                  <Typography variant="h4">{stats.bansThisMonth}</Typography>
                   <Typography variant="body2" color="text.secondary">
                     Bans Added This Month
                   </Typography>
@@ -255,7 +303,7 @@ const BannedList: React.FC = () => {
               <Box display="flex" alignItems="center">
                 <PersonIcon sx={{ fontSize: 40, color: 'info.main', mr: 2 }} />
                 <Box>
-                  <Typography variant="h4">0</Typography>
+                  <Typography variant="h4">{stats.pendingReview}</Typography>
                   <Typography variant="body2" color="text.secondary">
                     Bans Pending Review
                   </Typography>
@@ -270,7 +318,7 @@ const BannedList: React.FC = () => {
               <Box display="flex" alignItems="center">
                 <BusinessIcon sx={{ fontSize: 40, color: 'success.main', mr: 2 }} />
                 <Box>
-                  <Typography variant="h4">2</Typography>
+                  <Typography variant="h4">{stats.uniqueReasons}</Typography>
                   <Typography variant="body2" color="text.secondary">
                     Unique Reasons for Ban
                   </Typography>
@@ -342,7 +390,9 @@ const BannedList: React.FC = () => {
                           </TableCell>
                           <TableCell>
                             <Typography variant="body2">
-                              {visitor.bannedBy}
+                              {typeof visitor.bannedBy === 'string'
+                                ? visitor.bannedBy
+                                : visitor.bannedBy?.fullName || visitor.bannedBy?.email || 'Unknown'}
                             </Typography>
                           </TableCell>
                           <TableCell>

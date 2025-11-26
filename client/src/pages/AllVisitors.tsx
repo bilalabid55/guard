@@ -101,7 +101,11 @@ const AllVisitors: React.FC = () => {
         setCompanies(compRes.data?.companies || []);
         setAccessPoints(apRes.data?.accessPoints || []);
       } catch (e: any) {
-        setError(e?.response?.data?.message || 'Failed to load filter options');
+        const msg = e?.response?.data?.message || 'Failed to load filter options';
+        // Do not show access-denied banner here; page still works for guards/managers
+        if (!msg.toLowerCase().includes('access denied') && !msg.toLowerCase().includes('required role')) {
+          setError(msg);
+        }
       }
     };
     fetchFilters();
@@ -123,11 +127,26 @@ const AllVisitors: React.FC = () => {
 
       const response = await axios.get(`/api/visitors?${params}`);
       setVisitors(response.data.visitors);
+      // Fallback: if companies list failed to load, derive from visitor data
+      if (!companies || companies.length === 0) {
+        const names: string[] = Array.from(
+          new Set<string>(
+            ((response.data.visitors || [])
+              .map((v: any) => v?.company as string | undefined)
+              .filter((x: any): x is string => typeof x === 'string' && x.length > 0))
+          )
+        );
+        setCompanies(names.map((n, i) => ({ _id: String(i), name: n })));
+      }
       setTotalPages(response.data.pagination.pages);
       setTotalVisitors(response.data.pagination.total);
     } catch (error: any) {
       console.error('Error fetching visitors:', error);
-      setError(error.response?.data?.message || 'Failed to fetch visitors');
+      const msg = error.response?.data?.message || 'Failed to fetch visitors';
+      // Suppress visual alert for access-denied messages; backend auth still enforced
+      if (!msg.toLowerCase().includes('access denied') && !msg.toLowerCase().includes('required role')) {
+        setError(msg);
+      }
     } finally {
       setLoading(false);
     }
@@ -313,7 +332,7 @@ const AllVisitors: React.FC = () => {
                 fullWidth
                 variant="outlined"
                 startIcon={<FilterIcon />}
-                onClick={fetchVisitors}
+                onClick={() => { setPage(1); fetchVisitors(); }}
               >
                 Apply Filters
               </Button>
@@ -340,6 +359,7 @@ const AllVisitors: React.FC = () => {
                   <TableCell>Company</TableCell>
                   <TableCell>Purpose</TableCell>
                   <TableCell>Check-in Time</TableCell>
+                  <TableCell>Check-out Time</TableCell>
                   <TableCell>Duration</TableCell>
                   <TableCell>Status</TableCell>
                   <TableCell>Access Point</TableCell>
@@ -388,7 +408,7 @@ const AllVisitors: React.FC = () => {
                           {new Date(visitor.checkInTime).toLocaleString()}
                         </Typography>
                         <Typography variant="caption" color="text.secondary">
-                          by {visitor.checkedInBy.fullName}
+                          by {visitor.checkedInBy?.fullName || 'System'}
                         </Typography>
                       </TableCell>
                       <TableCell>

@@ -55,6 +55,14 @@ const SuperAdminDashboard: React.FC = () => {
   const [detailsLoading, setDetailsLoading] = useState(false);
   const [selectedAdmin, setSelectedAdmin] = useState<Admin | null>(null);
   const [adminDetails, setAdminDetails] = useState<any>(null);
+  const [subEditOpen, setSubEditOpen] = useState(false);
+  const [subForm, setSubForm] = useState<{
+    plan: 'starter' | 'professional' | 'enterprise';
+    status: 'active' | 'inactive' | 'paused';
+    startDate: string;
+    endDate: string;
+    memberLimit: number | '';
+  }>({ plan: 'starter', status: 'active', startDate: '', endDate: '', memberLimit: 5 });
   const { logout } = useAuth();
   const [newAdmin, setNewAdmin] = useState({
     fullName: '',
@@ -103,6 +111,43 @@ const SuperAdminDashboard: React.FC = () => {
       setError('Failed to load admin details');
     } finally {
       setDetailsLoading(false);
+    }
+  };
+
+  const openEditSubscription = () => {
+    if (!adminDetails) return;
+    const s = adminDetails.subscription || {};
+    const toDateStr = (d?: string) => (d ? new Date(d).toISOString().slice(0, 10) : '');
+    setSubForm({
+      plan: (s.plan as any) || 'starter',
+      status: (s.status as any) || 'active',
+      startDate: toDateStr(s.startDate),
+      endDate: toDateStr(s.endDate),
+      memberLimit: typeof s.memberLimit === 'number' ? s.memberLimit : 5
+    });
+    setSubEditOpen(true);
+  };
+
+  const saveSubscription = async () => {
+    if (!selectedAdmin) return;
+    try {
+      const payload: any = {
+        plan: subForm.plan,
+        status: subForm.status,
+        memberLimit: subForm.memberLimit === '' ? undefined : Number(subForm.memberLimit)
+      };
+      if (subForm.startDate) payload.startDate = subForm.startDate;
+      if (subForm.endDate) payload.endDate = subForm.endDate;
+      await axios.put(`/api/admin/${selectedAdmin._id}/subscription`, payload);
+      setSuccess('Subscription saved');
+      setSubEditOpen(false);
+      if (selectedAdmin) {
+        const res = await axios.get(`/api/admin/${selectedAdmin._id}/details`);
+        setAdminDetails(res.data);
+      }
+      fetchAdmins();
+    } catch (e: any) {
+      setError(e?.response?.data?.message || 'Failed to save subscription');
     }
   };
 
@@ -321,6 +366,64 @@ const SuperAdminDashboard: React.FC = () => {
           </Button>
         </DialogActions>
       </Dialog>
+      <Dialog open={subEditOpen} onClose={() => setSubEditOpen(false)} maxWidth="sm" fullWidth>
+        <DialogTitle>Edit Subscription</DialogTitle>
+        <DialogContent>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: 1 }}>
+            <FormControl fullWidth>
+              <InputLabel>Plan</InputLabel>
+              <Select
+                label="Plan"
+                value={subForm.plan}
+                onChange={(e: any) => setSubForm(prev => ({ ...prev, plan: e.target.value }))}
+              >
+                <MenuItem value="starter">Starter</MenuItem>
+                <MenuItem value="professional">Professional</MenuItem>
+                <MenuItem value="enterprise">Enterprise</MenuItem>
+              </Select>
+            </FormControl>
+            <FormControl fullWidth>
+              <InputLabel>Status</InputLabel>
+              <Select
+                label="Status"
+                value={subForm.status}
+                onChange={(e: any) => setSubForm(prev => ({ ...prev, status: e.target.value }))}
+              >
+                <MenuItem value="active">Active</MenuItem>
+                <MenuItem value="inactive">Inactive</MenuItem>
+                <MenuItem value="paused">Paused</MenuItem>
+              </Select>
+            </FormControl>
+            <TextField
+              label="Member Limit"
+              type="number"
+              value={subForm.memberLimit}
+              onChange={(e) => setSubForm(prev => ({ ...prev, memberLimit: e.target.value === '' ? '' : Number(e.target.value) }))}
+              fullWidth
+            />
+            <TextField
+              label="Start Date"
+              type="date"
+              value={subForm.startDate}
+              onChange={(e) => setSubForm(prev => ({ ...prev, startDate: e.target.value }))}
+              fullWidth
+              InputLabelProps={{ shrink: true }}
+            />
+            <TextField
+              label="End Date"
+              type="date"
+              value={subForm.endDate}
+              onChange={(e) => setSubForm(prev => ({ ...prev, endDate: e.target.value }))}
+              fullWidth
+              InputLabelProps={{ shrink: true }}
+            />
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setSubEditOpen(false)}>Cancel</Button>
+          <Button variant="contained" onClick={saveSubscription}>Save</Button>
+        </DialogActions>
+      </Dialog>
 
       {/* Notifications */}
       <Snackbar
@@ -354,6 +457,9 @@ const SuperAdminDashboard: React.FC = () => {
                     Valid until: {new Date(adminDetails.subscription.endDate).toLocaleDateString()}
                   </Typography>
                 )}
+                <Box mt={1}>
+                  <Button variant="outlined" size="small" onClick={openEditSubscription}>Edit Subscription</Button>
+                </Box>
               </Box>
               <Box mt={2}>
                 <Typography variant="subtitle2">Site</Typography>

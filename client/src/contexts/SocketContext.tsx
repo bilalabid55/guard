@@ -17,7 +17,11 @@ export const SocketProvider: React.FC<{ children: ReactNode }> = ({ children }) 
 
   useEffect(() => {
     if (isAuthenticated && user) {
-      const apiBase = process.env.REACT_APP_API_URL || 'https://guard-ujfi.onrender.com/api';
+      const apiEnv = process.env.REACT_APP_API_URL;
+      const isLocalhost = typeof window !== 'undefined' && window.location.hostname === 'localhost';
+      const apiBase = isLocalhost
+        ? 'http://localhost:5000/api'
+        : (apiEnv || 'http://localhost:5000/api');
       const inferredSocketUrl = apiBase.endsWith('/api') ? apiBase.slice(0, -4) : apiBase;
       const socketUrl = process.env.REACT_APP_SOCKET_URL || inferredSocketUrl;
       const newSocket = io(socketUrl, {

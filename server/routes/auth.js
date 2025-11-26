@@ -10,7 +10,10 @@ const router = express.Router();
 
 // Generate JWT token
 const generateToken = (id) => {
-  return jwt.sign({ id }, process.env.JWT_SECRET, {
+  // Use a safe default in case JWT_SECRET is not set, to avoid hard crashes during
+  // registration/login. In production you should still configure JWT_SECRET.
+  const secret = process.env.JWT_SECRET || 'acso-guard-dev-secret';
+  return jwt.sign({ id }, secret, {
     expiresIn: process.env.JWT_EXPIRE || '7d'
   });
 };
@@ -33,16 +36,19 @@ router.post('/register', [
 
     const { fullName, email, password, phone, address, siteName, siteAddress, plan } = req.body;
 
+    // Normalize email for uniqueness
+    const normalizedEmail = String(email).trim().toLowerCase();
+
     // Check if user already exists
-    const existingUser = await User.findOne({ email });
+    const existingUser = await User.findOne({ email: normalizedEmail });
     if (existingUser) {
       return res.status(400).json({ message: 'User already exists' });
     }
 
-    // Create new admin user
+    // Create new admin user (no active subscription yet)
     const user = new User({
       fullName,
-      email,
+      email: normalizedEmail,
       password,
       role: 'admin',
       phone,
@@ -62,34 +68,11 @@ router.post('/register', [
       country: 'USA',
       admin: user._id
     });
-
-    // Create a 30-day trial subscription and link to user
-    const Subscription = require('../models/Subscription');
-    const startDate = new Date();
-    const endDate = new Date(startDate);
-    endDate.setDate(endDate.getDate() + 30);
-    const memberLimits = { starter: 5, professional: 25, enterprise: 1000 };
-    const selectedPlan = ['starter','professional','enterprise'].includes(String(plan)) ? plan : 'starter';
-    const subscription = await Subscription.create({
-      plan: selectedPlan,
-      status: 'active',
-      startDate,
-      endDate,
-      memberLimit: memberLimits[selectedPlan],
-      adminId: user._id
-    });
-    user.subscription = subscription._id;
+    
+    // Link the newly created site to user's managedSites but DO NOT create/activate a subscription yet.
+    // Subscription will be created/activated later after payment or by Super Admin.
     user.managedSites = [site._id];
     await user.save();
-
-    // Sync site's embedded subscription for UI
-    site.subscription = {
-      status: 'active',
-      plan: selectedPlan,
-      startDate,
-      endDate
-    };
-    await site.save();
 
     // Generate token
     const token = generateToken(user._id);
@@ -146,26 +129,22 @@ router.post('/login', [
       return res.status(400).json({ message: 'Invalid credentials' });
     }
 
-    // If admin, enforce subscription validity (must be active and not expired)
+    // If admin, try to load subscription info and sync to site for UI, but do NOT block login
+    // when there is no active subscription. Payment/activation will be handled separately.
     if (user.role === 'admin') {
       const sub = await Subscription.findOne({ adminId: user._id });
-      if (!sub) {
-        return res.status(403).json({ message: 'No active subscription found. Please contact support.' });
-      }
-      const now = new Date();
-      if (sub.status !== 'active' || (sub.endDate && new Date(sub.endDate) < now)) {
-        return res.status(403).json({ message: 'Subscription expired or inactive. Please renew to continue.' });
-      }
 
-      // Sync site's embedded subscription for UI (reflect actual status)
-      const adminSite = await Site.findOne({ admin: user._id });
-      if (adminSite) {
-        adminSite.subscription = adminSite.subscription || {};
-        adminSite.subscription.status = sub.status;
-        adminSite.subscription.plan = sub.plan;
-        adminSite.subscription.startDate = sub.startDate;
-        adminSite.subscription.endDate = sub.endDate;
-        await adminSite.save();
+      if (sub) {
+        // Sync site's embedded subscription for UI (reflect actual status)
+        const adminSite = await Site.findOne({ admin: user._id });
+        if (adminSite) {
+          adminSite.subscription = adminSite.subscription || {};
+          adminSite.subscription.status = sub.status;
+          adminSite.subscription.plan = sub.plan;
+          adminSite.subscription.startDate = sub.startDate;
+          adminSite.subscription.endDate = sub.endDate;
+          await adminSite.save();
+        }
       }
     }
 

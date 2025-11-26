@@ -145,6 +145,7 @@ app.use('/api/incidents', require('./routes/incidents'));
 app.use('/api/access-points', require('./routes/accessPoints'));
 app.use('/api/subscriptions', require('./routes/subscription'));
 app.use('/api/reports', require('./routes/reports'));
+app.use('/api/banned-visitors', require('./routes/bannedVisitors'));
 app.use('/api/stripe', require('./routes/stripe'));
 app.use('/api/preregistration', require('./routes/preRegistration'));
 app.use('/api/timeline', require('./routes/timeline'));

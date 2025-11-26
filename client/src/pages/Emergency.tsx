@@ -260,6 +260,14 @@ const Emergency: React.FC = () => {
                       size="small"
                       variant="outlined"
                       startIcon={<PhoneIcon />}
+                      component="a"
+                      href={contact.phone ? `tel:${contact.phone}` : undefined}
+                      onClick={(e) => {
+                        if (!contact.phone) {
+                          e.preventDefault();
+                        }
+                      }}
+                      disabled={!contact.phone}
                     >
                       Call
                     </Button>

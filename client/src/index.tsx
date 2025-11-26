@@ -5,9 +5,12 @@ import './index.css';
 import App from './App';
 
 // Configure axios base URL to the service root (not including '/api') - MUST be set before any API calls
+// On localhost, always use the local backend and ignore REACT_APP_API_URL to avoid accidentally hitting Render.
 const apiEnv = process.env.REACT_APP_API_URL;
-const defaultApi = 'https://guard-ujfi.onrender.com/api';
-const apiBase = apiEnv || defaultApi;
+const isLocalhost = typeof window !== 'undefined' && window.location.hostname === 'localhost';
+const apiBase = isLocalhost
+  ? 'http://localhost:5000/api'
+  : (apiEnv || 'http://localhost:5000/api');
 const serviceRoot = apiBase.endsWith('/api') ? apiBase.slice(0, -4) : apiBase;
 axios.defaults.baseURL = serviceRoot;
 
