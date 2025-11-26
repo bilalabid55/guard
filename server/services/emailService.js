@@ -1,15 +1,18 @@
 const nodemailer = require('nodemailer');
 
-// Create transporter
+// Create transporter (supports SendGrid SMTP if configured)
 const createTransporter = () => {
-  return nodemailer.createTransporter({
-    host: process.env.EMAIL_HOST,
-    port: process.env.EMAIL_PORT,
-    secure: false, // true for 465, false for other ports
-    auth: {
-      user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASS,
-    },
+  const host = process.env.EMAIL_HOST;
+  const port = Number(process.env.EMAIL_PORT || 587);
+  const secure = port === 465; // true for 465, false for others
+  const user = process.env.EMAIL_USER;
+  const pass = process.env.EMAIL_PASS;
+
+  return nodemailer.createTransport({
+    host,
+    port,
+    secure,
+    auth: user && pass ? { user, pass } : undefined,
   });
 };
 
@@ -19,7 +22,7 @@ const sendPreRegistrationInvitation = async (visitorData, siteData, preRegistrat
     const transporter = createTransporter();
     
     const mailOptions = {
-      from: `"${siteData.name}" <${process.env.EMAIL_USER}>`,
+      from: `"${siteData.name}" <${process.env.SENDER_EMAIL || process.env.EMAIL_USER}>`,
       to: visitorData.email,
       subject: `Pre-registration Invitation - ${siteData.name}`,
       html: `
@@ -153,7 +156,7 @@ const sendBannedVisitorAlert = async (visitorData, siteData, bannedVisitorData, 
     const transporter = createTransporter();
     
     const mailOptions = {
-      from: `"${siteData.name} Security" <${process.env.EMAIL_USER}>`,
+      from: `"${siteData.name} Security" <${process.env.SENDER_EMAIL || process.env.EMAIL_USER}>`,
       to: alertRecipients.join(', '),
       subject: `🚨 BANNED VISITOR ATTEMPT - ${siteData.name}`,
       html: `
