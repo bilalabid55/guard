@@ -1,28 +1,18 @@
-const nodemailer = require('nodemailer');
-
-// Create transporter (supports SendGrid SMTP if configured)
-const createTransporter = () => {
-  const host = process.env.EMAIL_HOST;
-  const port = Number(process.env.EMAIL_PORT || 587);
-  const secure = port === 465; // true for 465, false for others
-  const user = process.env.EMAIL_USER;
-  const pass = process.env.EMAIL_PASS;
-
-  return nodemailer.createTransport({
-    host,
-    port,
-    secure,
-    auth: user && pass ? { user, pass } : undefined,
-  });
-};
+const sgMail = require('@sendgrid/mail');
+const FROM_EMAIL = process.env.SENDER_EMAIL || process.env.EMAIL_USER;
+if (process.env.SENDGRID_API_KEY) {
+  sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+}
 
 // Send pre-registration invitation email
 const sendPreRegistrationInvitation = async (visitorData, siteData, preRegistrationUrl) => {
   try {
-    const transporter = createTransporter();
-    
-    const mailOptions = {
-      from: `"${siteData.name}" <${process.env.SENDER_EMAIL || process.env.EMAIL_USER}>`,
+    if (!process.env.SENDGRID_API_KEY || !FROM_EMAIL) {
+      throw new Error('Missing SENDGRID_API_KEY or SENDER_EMAIL');
+    }
+
+    const msg = {
+      from: { email: FROM_EMAIL, name: siteData.name },
       to: visitorData.email,
       subject: `Pre-registration Invitation - ${siteData.name}`,
       html: `
@@ -72,12 +62,12 @@ const sendPreRegistrationInvitation = async (visitorData, siteData, preRegistrat
             </div>
           </div>
         </div>
-      `
+      `,
     };
 
-    const result = await transporter.sendMail(mailOptions);
-    console.log('Pre-registration email sent:', result.messageId);
-    return { success: true, messageId: result.messageId };
+    const [result] = await sgMail.send(msg);
+    console.log('Pre-registration email sent:', result?.headers?.['x-message-id'] || 'ok');
+    return { success: true, messageId: result?.headers?.['x-message-id'] };
   } catch (error) {
     console.error('Error sending pre-registration email:', error);
     return { success: false, error: error.message };
@@ -87,10 +77,12 @@ const sendPreRegistrationInvitation = async (visitorData, siteData, preRegistrat
 // Send pre-registration confirmation email
 const sendPreRegistrationConfirmation = async (visitorData, siteData, qrCodeDataUrl) => {
   try {
-    const transporter = createTransporter();
-    
-    const mailOptions = {
-      from: `"${siteData.name}" <${process.env.EMAIL_USER}>`,
+    if (!process.env.SENDGRID_API_KEY || !FROM_EMAIL) {
+      throw new Error('Missing SENDGRID_API_KEY or SENDER_EMAIL');
+    }
+
+    const msg = {
+      from: { email: FROM_EMAIL, name: siteData.name },
       to: visitorData.email,
       subject: `Pre-registration Confirmed - ${siteData.name}`,
       html: `
@@ -138,12 +130,12 @@ const sendPreRegistrationConfirmation = async (visitorData, siteData, qrCodeData
             </div>
           </div>
         </div>
-      `
+      `,
     };
 
-    const result = await transporter.sendMail(mailOptions);
-    console.log('Pre-registration confirmation email sent:', result.messageId);
-    return { success: true, messageId: result.messageId };
+    const [result] = await sgMail.send(msg);
+    console.log('Pre-registration confirmation email sent:', result?.headers?.['x-message-id'] || 'ok');
+    return { success: true, messageId: result?.headers?.['x-message-id'] };
   } catch (error) {
     console.error('Error sending pre-registration confirmation email:', error);
     return { success: false, error: error.message };
@@ -153,11 +145,13 @@ const sendPreRegistrationConfirmation = async (visitorData, siteData, qrCodeData
 // Send banned visitor alert email
 const sendBannedVisitorAlert = async (visitorData, siteData, bannedVisitorData, alertRecipients) => {
   try {
-    const transporter = createTransporter();
-    
-    const mailOptions = {
-      from: `"${siteData.name} Security" <${process.env.SENDER_EMAIL || process.env.EMAIL_USER}>`,
-      to: alertRecipients.join(', '),
+    if (!process.env.SENDGRID_API_KEY || !FROM_EMAIL) {
+      throw new Error('Missing SENDGRID_API_KEY or SENDER_EMAIL');
+    }
+
+    const msg = {
+      from: { email: FROM_EMAIL, name: `${siteData.name} Security` },
+      to: alertRecipients,
       subject: `🚨 BANNED VISITOR ATTEMPT - ${siteData.name}`,
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
@@ -200,12 +194,12 @@ const sendBannedVisitorAlert = async (visitorData, siteData, bannedVisitorData, 
             <p><strong>Address:</strong> ${siteData.address}</p>
           </div>
         </div>
-      `
+      `,
     };
 
-    const result = await transporter.sendMail(mailOptions);
-    console.log('Banned visitor alert email sent:', result.messageId);
-    return { success: true, messageId: result.messageId };
+    const [result] = await sgMail.send(msg);
+    console.log('Banned visitor alert email sent:', result?.headers?.['x-message-id'] || 'ok');
+    return { success: true, messageId: result?.headers?.['x-message-id'] };
   } catch (error) {
     console.error('Error sending banned visitor alert email:', error);
     return { success: false, error: error.message };
