@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import {
   Box,
   Card,
@@ -32,6 +32,10 @@ import {
 } from '@mui/icons-material';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line, PieChart, Pie, Cell } from 'recharts';
 import axios from 'axios';
+import { useAuth } from '../contexts/AuthContext';
+import { useSocket } from '../contexts/SocketContext';
+
+const PIE_COLORS = ['#F44336', '#FF9800', '#9C27B0', '#2196F3', '#4CAF50', '#00BCD4', '#607D8B'];
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -56,11 +60,23 @@ function TabPanel(props: TabPanelProps) {
 }
 
 const Reports: React.FC = () => {
+  const { user, isAuthenticated } = useAuth();
+  const { socket, isConnected: socketConnected } = useSocket();
   const [tabValue, setTabValue] = useState(0);
-  const [dateRange, setDateRange] = useState({ startDate: '', endDate: '' });
+  // Default to last 30 days
+  const defaultDates = () => {
+    const end = new Date();
+    const start = new Date();
+    start.setDate(end.getDate() - 29);
+    const fmt = (d: Date) => d.toISOString().slice(0, 10);
+    return { startDate: fmt(start), endDate: fmt(end) };
+  };
+  const [dateRange, setDateRange] = useState(defaultDates());
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const POLL_MS = 15000; // 15s polling for near real-time updates
+  const refreshTimerRef = useRef<number | null>(null);
 
   // Real data state
   const [visitorSummaryData, setVisitorSummaryData] = useState({
@@ -89,18 +105,97 @@ const Reports: React.FC = () => {
   const [bannedByCompanyData, setBannedByCompanyData] = useState<Array<{ name: string; count: number }>>([]);
   const [bannedByReasonData, setBannedByReasonData] = useState<Array<{ name: string; count: number }>>([]);
 
+  const hasIncidentsByType = useMemo(() => (incidentsByTypeData || []).some((d) => (d.count || 0) > 0), [incidentsByTypeData]);
+  const hasIncidentsBySeverity = useMemo(() => (incidentsBySeverityData || []).some((d) => (d.count || 0) > 0), [incidentsBySeverityData]);
+  const hasBannedByCompany = useMemo(() => (bannedByCompanyData || []).some((d) => (d.count || 0) > 0), [bannedByCompanyData]);
+  const hasBannedByReason = useMemo(() => (bannedByReasonData || []).some((d) => (d.count || 0) > 0), [bannedByReasonData]);
+
+  // Derive a siteId the API expects (declare BEFORE effects that use it)
+  const derivedSiteId = useMemo(() => {
+    if (!user) return '';
+    // Admin: backend will infer first managed site if omitted, but pass it if we have it
+    if (user.role === 'admin') {
+      // user.siteInfo may be present from /api/auth/me
+      const id = (user as any).siteInfo?._id;
+      return id || '';
+    }
+    // Others typically have assignedSite (either id or populated doc)
+    const asg = (user as any).assignedSite;
+    if (!asg) return '';
+    return typeof asg === 'object' ? (asg?._id || '') : String(asg);
+  }, [user]);
+
   useEffect(() => {
-    // Initial load uses today's date if none selected
+    // Generate when user/site is available or date range changes
     generateReports();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [derivedSiteId, dateRange.startDate, dateRange.endDate]);
+
+  // Polling for near real-time updates
+  useEffect(() => {
+    const id = setInterval(() => {
+      generateReports();
+    }, POLL_MS);
+    const onFocus = () => generateReports();
+    window.addEventListener('focus', onFocus);
+    return () => {
+      clearInterval(id);
+      window.removeEventListener('focus', onFocus);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [derivedSiteId, dateRange.startDate, dateRange.endDate]);
+
+  useEffect(() => {
+    if (!socket || !socketConnected || !isAuthenticated) return;
+
+    const scheduleRefresh = () => {
+      if (refreshTimerRef.current) {
+        window.clearTimeout(refreshTimerRef.current);
+      }
+      refreshTimerRef.current = window.setTimeout(() => {
+        generateReports();
+      }, 500);
+    };
+
+    const onUpdate = (payload: any) => {
+      const s = payload?.siteId || payload?.site || payload?.site?._id;
+      if (derivedSiteId && s && String(s) !== String(derivedSiteId)) return;
+      scheduleRefresh();
+    };
+
+    const events = [
+      'reports_refresh',
+      'visitor_checked_in',
+      'visitor_checked_out',
+      'visitor_activity',
+      'incident_changed',
+      'banned_changed',
+      'banned_visitor_alert',
+      'security_alert',
+    ];
+
+    events.forEach((ev) => socket.on(ev, onUpdate));
+
+    return () => {
+      events.forEach((ev) => socket.off(ev, onUpdate));
+      if (refreshTimerRef.current) {
+        window.clearTimeout(refreshTimerRef.current);
+        refreshTimerRef.current = null;
+      }
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [socket, socketConnected, isAuthenticated, derivedSiteId, dateRange.startDate, dateRange.endDate]);
 
   const generateReports = async () => {
     try {
       setLoading(true);
       setError('');
       const params: any = {};
-      if (dateRange.startDate) params.startDate = dateRange.startDate;
-      if (dateRange.endDate) params.endDate = dateRange.endDate;
+      // Always show all data (ignore date range filters)
+      // For admin: omit siteId so backend aggregates across all managed sites.
+      if (user?.role !== 'admin' && derivedSiteId) params.siteId = derivedSiteId;
+      
+      // If user is not authorized role or we cannot infer siteId, still attempt; backend will guard
 
       // Visitor summary
       const vRes = await axios.get('/api/reports/visitor-summary', { params });
@@ -112,9 +207,19 @@ const Reports: React.FC = () => {
         overstayed: vs?.summary?.overstayed || 0,
         averageDuration: +(vs?.summary?.averageDuration || 0).toFixed?.(1) || 0,
       });
-      const hourly = (vs?.visitorsByHour || []).map((h: any) => ({ hour: String(h._id).padStart(2, '0') + ':00', count: h.count || 0 }));
-      setVisitorsByHourData(hourly);
-      const companies = (vs?.visitorsByCompany || []).map((c: any) => ({ name: c._id || 'Unknown', count: c.count || 0 }));
+      // Prefill 24 hours to avoid an empty chart area
+      const hourlyRaw = (vs?.visitorsByHour || []).map((h: any) => ({ hour: Number(h._id), count: h.count || 0 }));
+      const hoursFilled: Array<{ hour: string; count: number }> = [];
+      for (let i = 0; i < 24; i++) {
+        const found = hourlyRaw.find((x: { hour: number; count: number }) => x.hour === i);
+        hoursFilled.push({ hour: String(i).padStart(2, '0') + ':00', count: found ? found.count : 0 });
+      }
+      setVisitorsByHourData(hoursFilled);
+
+      let companies = (vs?.visitorsByCompany || []).map((c: any) => ({ name: c._id || 'Unknown', count: c.count || 0 }));
+      if (!companies || companies.length === 0) {
+        companies = [{ name: 'No data', count: 0 }];
+      }
       setVisitorsByCompanyData(companies);
 
       // Incident summary
@@ -125,8 +230,12 @@ const Reports: React.FC = () => {
         resolvedIncidents: is?.summary?.resolvedIncidents || 0,
         averageResolutionTime: +(is?.summary?.averageResolutionTime || 0).toFixed?.(1) || 0,
       });
-      setIncidentsByTypeData((is?.incidentsByType || []).map((x: any) => ({ name: x._id || 'other', count: x.count || 0 })));
-      setIncidentsBySeverityData((is?.incidentsBySeverity || []).map((x: any) => ({ name: x._id || 'unknown', count: x.count || 0 })));
+      let iType = (is?.incidentsByType || []).map((x: any) => ({ name: x._id || 'other', count: Number(x.count || 0) }));
+      if (!iType || iType.length === 0) iType = [{ name: 'No data', count: 0 }];
+      setIncidentsByTypeData(iType);
+      let iSev = (is?.incidentsBySeverity || []).map((x: any) => ({ name: x._id || 'unknown', count: Number(x.count || 0) }));
+      if (!iSev || iSev.length === 0) iSev = [{ name: 'No data', count: 0 }];
+      setIncidentsBySeverityData(iSev);
 
       // Security summary
       const sRes = await axios.get('/api/reports/security-summary', { params });
@@ -136,8 +245,12 @@ const Reports: React.FC = () => {
         bannedThisPeriod: ss?.summary?.bannedThisPeriod || 0,
         bannedAttempts: ss?.summary?.bannedAttempts || 0,
       });
-      setBannedByCompanyData((ss?.bannedByCompany || []).map((x: any) => ({ name: x._id || 'Unknown', count: x.count || 0 })));
-      setBannedByReasonData((ss?.bannedByReason || []).map((x: any) => ({ name: x._id || 'Other', count: x.count || 0 })));
+      let bCompany = (ss?.bannedByCompany || []).map((x: any) => ({ name: x._id || 'Unknown', count: Number(x.count || 0) }));
+      if (!bCompany || bCompany.length === 0) bCompany = [{ name: 'No data', count: 0 }];
+      setBannedByCompanyData(bCompany);
+      let bReason = (ss?.bannedByReason || []).map((x: any) => ({ name: x._id || 'Other', count: Number(x.count || 0) }));
+      if (!bReason || bReason.length === 0) bReason = [{ name: 'No data', count: 0 }];
+      setBannedByReasonData(bReason);
 
       setSuccess('Reports generated');
     } catch (e: any) {
@@ -150,8 +263,8 @@ const Reports: React.FC = () => {
 
   const downloadCsv = async (type: 'visitors'|'incidents'|'banned') => {
     const params: any = { type, format: 'csv' };
-    if (dateRange.startDate) params.startDate = dateRange.startDate;
-    if (dateRange.endDate) params.endDate = dateRange.endDate;
+    // Always export all data (ignore date range filters)
+    if (user?.role !== 'admin' && derivedSiteId) params.siteId = derivedSiteId;
     const res = await axios.get('/api/reports/export', { params, responseType: 'blob' });
     const blob = new Blob([res.data], { type: 'text/csv' });
     const url = window.URL.createObjectURL(blob);
@@ -392,23 +505,31 @@ const Reports: React.FC = () => {
                   <Typography variant="h6" gutterBottom>
                     Incidents by Type
                   </Typography>
-                  <ResponsiveContainer width="100%" height={300}>
-                    <PieChart>
-                      <Pie
-                        data={incidentsByTypeData}
-                        cx="50%"
-                        cy="50%"
-                        outerRadius={100}
-                        dataKey="count"
-                        label={({ name, count }: any) => `${name}: ${count}`}
-                      >
-                        {incidentsByTypeData.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={['#F44336', '#FF9800', '#9C27B0'][index]} />
-                        ))}
-                      </Pie>
-                      <Tooltip />
-                    </PieChart>
-                  </ResponsiveContainer>
+                  {!hasIncidentsByType ? (
+                    <Box sx={{ height: 300, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <Typography variant="body2" color="text.secondary">
+                        No incident data for selected date range
+                      </Typography>
+                    </Box>
+                  ) : (
+                    <ResponsiveContainer width="100%" height={300}>
+                      <PieChart>
+                        <Pie
+                          data={incidentsByTypeData}
+                          cx="50%"
+                          cy="50%"
+                          outerRadius={100}
+                          dataKey="count"
+                          label={({ name, count }: any) => `${name}: ${count}`}
+                        >
+                          {incidentsByTypeData.map((_, index) => (
+                            <Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} />
+                          ))}
+                        </Pie>
+                        <Tooltip />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  )}
                 </CardContent>
               </Card>
             </Grid>
@@ -419,15 +540,23 @@ const Reports: React.FC = () => {
                   <Typography variant="h6" gutterBottom>
                     Incidents by Severity
                   </Typography>
-                  <ResponsiveContainer width="100%" height={300}>
-                    <BarChart data={incidentsBySeverityData}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="name" />
-                      <YAxis />
-                      <Tooltip />
-                      <Bar dataKey="count" fill="#FF5722" />
-                    </BarChart>
-                  </ResponsiveContainer>
+                  {!hasIncidentsBySeverity ? (
+                    <Box sx={{ height: 300, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <Typography variant="body2" color="text.secondary">
+                        No incident data for selected date range
+                      </Typography>
+                    </Box>
+                  ) : (
+                    <ResponsiveContainer width="100%" height={300}>
+                      <BarChart data={incidentsBySeverityData}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="name" />
+                        <YAxis />
+                        <Tooltip />
+                        <Bar dataKey="count" fill="#FF5722" />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  )}
                 </CardContent>
               </Card>
             </Grid>
@@ -485,15 +614,23 @@ const Reports: React.FC = () => {
                   <Typography variant="h6" gutterBottom>
                     Banned by Company
                   </Typography>
-                  <ResponsiveContainer width="100%" height={300}>
-                    <BarChart data={bannedByCompanyData}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="name" />
-                      <YAxis />
-                      <Tooltip />
-                      <Bar dataKey="count" fill="#F44336" />
-                    </BarChart>
-                  </ResponsiveContainer>
+                  {!hasBannedByCompany ? (
+                    <Box sx={{ height: 300, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <Typography variant="body2" color="text.secondary">
+                        No banned visitor data for selected date range
+                      </Typography>
+                    </Box>
+                  ) : (
+                    <ResponsiveContainer width="100%" height={300}>
+                      <BarChart data={bannedByCompanyData}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="name" />
+                        <YAxis />
+                        <Tooltip />
+                        <Bar dataKey="count" fill="#F44336" />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  )}
                 </CardContent>
               </Card>
             </Grid>
@@ -504,15 +641,23 @@ const Reports: React.FC = () => {
                   <Typography variant="h6" gutterBottom>
                     Banned by Reason
                   </Typography>
-                  <ResponsiveContainer width="100%" height={300}>
-                    <BarChart data={bannedByReasonData}>
-                      <CartesianGrid strokeDasharray="3 3" />
-                      <XAxis dataKey="name" />
-                      <YAxis />
-                      <Tooltip />
-                      <Bar dataKey="count" fill="#FF9800" />
-                    </BarChart>
-                  </ResponsiveContainer>
+                  {!hasBannedByReason ? (
+                    <Box sx={{ height: 300, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      <Typography variant="body2" color="text.secondary">
+                        No banned visitor data for selected date range
+                      </Typography>
+                    </Box>
+                  ) : (
+                    <ResponsiveContainer width="100%" height={300}>
+                      <BarChart data={bannedByReasonData}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="name" />
+                        <YAxis />
+                        <Tooltip />
+                        <Bar dataKey="count" fill="#FF9800" />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  )}
                 </CardContent>
               </Card>
             </Grid>

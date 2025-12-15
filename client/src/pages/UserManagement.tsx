@@ -132,7 +132,8 @@ const UserManagement: React.FC<UserManagementProps> = ({ siteId }) => {
       const params = new URLSearchParams();
       if (siteId) params.append('siteId', siteId);
       if (filterRole) params.append('role', filterRole);
-      if (filterStatus) params.append('isActive', filterStatus);
+      if (filterStatus === 'active') params.append('isActive', 'true');
+      if (filterStatus === 'inactive') params.append('isActive', 'false');
       if (searchTerm) params.append('search', searchTerm);
 
       const response = await axios.get(`/api/users?${params.toString()}`);
@@ -311,7 +312,11 @@ const UserManagement: React.FC<UserManagementProps> = ({ siteId }) => {
     const matchesSearch = !searchTerm || 
       user.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
       user.email.toLowerCase().includes(searchTerm.toLowerCase());
-    return matchesSearch;
+    const matchesStatus =
+      !filterStatus ||
+      (filterStatus === 'active' && user.isActive) ||
+      (filterStatus === 'inactive' && !user.isActive);
+    return matchesSearch && matchesStatus;
   });
 
   return (
@@ -352,14 +357,17 @@ const UserManagement: React.FC<UserManagementProps> = ({ siteId }) => {
             </Grid>
             <Grid item xs={12} sm={2}>
               <FormControl fullWidth>
-                <InputLabel>Status</InputLabel>
+                <InputLabel id="status-filter-label">Status</InputLabel>
                 <Select
+                  labelId="status-filter-label"
+                  id="status-filter"
                   value={filterStatus}
-                  onChange={(e) => setFilterStatus(e.target.value)}
+                  label="Status"
+                  onChange={(e) => setFilterStatus(String(e.target.value))}
                 >
                   <MenuItem value="">All Statuses</MenuItem>
-                  <MenuItem value="true">Active</MenuItem>
-                  <MenuItem value="false">Inactive</MenuItem>
+                  <MenuItem value="active">Active</MenuItem>
+                  <MenuItem value="inactive">Inactive</MenuItem>
                 </Select>
               </FormControl>
             </Grid>

@@ -84,6 +84,21 @@ router.post('/', auth, [
 
     await incident.populate('reportedBy', 'fullName email');
 
+    // Emit realtime update for reports
+    try {
+      const io = req.app.get('io');
+      if (io) {
+        const siteId = incident.site ? incident.site.toString() : undefined;
+        io.emit('incident_changed', { action: 'created', siteId, incidentId: incident._id.toString() });
+        if (siteId) {
+          io.to(`site_${siteId}`).emit('incident_changed', { action: 'created', siteId, incidentId: incident._id.toString() });
+          io.to(`site_${siteId}`).emit('reports_refresh', { siteId, reason: 'incident_created' });
+        }
+      }
+    } catch (e) {
+      console.error('Realtime emit error (incident created):', e);
+    }
+
     res.status(201).json({
       message: 'Incident reported successfully',
       incident
@@ -141,6 +156,21 @@ router.put('/:id', auth, [
       return res.status(404).json({ message: 'Incident not found' });
     }
 
+    // Emit realtime update for reports
+    try {
+      const io = req.app.get('io');
+      if (io) {
+        const siteId = incident.site ? incident.site.toString() : undefined;
+        io.emit('incident_changed', { action: 'updated', siteId, incidentId: incident._id.toString() });
+        if (siteId) {
+          io.to(`site_${siteId}`).emit('incident_changed', { action: 'updated', siteId, incidentId: incident._id.toString() });
+          io.to(`site_${siteId}`).emit('reports_refresh', { siteId, reason: 'incident_updated' });
+        }
+      }
+    } catch (e) {
+      console.error('Realtime emit error (incident updated):', e);
+    }
+
     res.json({
       message: 'Incident updated successfully',
       incident
@@ -178,6 +208,21 @@ router.put('/:id/assign', auth, authorize('admin', 'site_manager'), [
 
     if (!incident) {
       return res.status(404).json({ message: 'Incident not found' });
+    }
+
+    // Emit realtime update for reports
+    try {
+      const io = req.app.get('io');
+      if (io) {
+        const siteId = incident.site ? incident.site.toString() : undefined;
+        io.emit('incident_changed', { action: 'assigned', siteId, incidentId: incident._id.toString() });
+        if (siteId) {
+          io.to(`site_${siteId}`).emit('incident_changed', { action: 'assigned', siteId, incidentId: incident._id.toString() });
+          io.to(`site_${siteId}`).emit('reports_refresh', { siteId, reason: 'incident_assigned' });
+        }
+      }
+    } catch (e) {
+      console.error('Realtime emit error (incident assigned):', e);
     }
 
     res.json({
@@ -219,6 +264,21 @@ router.put('/:id/resolve', auth, authorize('admin', 'site_manager'), [
 
     if (!incident) {
       return res.status(404).json({ message: 'Incident not found' });
+    }
+
+    // Emit realtime update for reports
+    try {
+      const io = req.app.get('io');
+      if (io) {
+        const siteId = incident.site ? incident.site.toString() : undefined;
+        io.emit('incident_changed', { action: 'resolved', siteId, incidentId: incident._id.toString() });
+        if (siteId) {
+          io.to(`site_${siteId}`).emit('incident_changed', { action: 'resolved', siteId, incidentId: incident._id.toString() });
+          io.to(`site_${siteId}`).emit('reports_refresh', { siteId, reason: 'incident_resolved' });
+        }
+      }
+    } catch (e) {
+      console.error('Realtime emit error (incident resolved):', e);
     }
 
     res.json({

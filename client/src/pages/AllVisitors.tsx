@@ -412,6 +412,11 @@ const AllVisitors: React.FC = () => {
                         </Typography>
                       </TableCell>
                       <TableCell>
+                        <Typography variant="body2">
+                          {visitor.checkOutTime ? new Date(visitor.checkOutTime).toLocaleString() : '-'}
+                        </Typography>
+                      </TableCell>
+                      <TableCell>
                         <Box display="flex" alignItems="center">
                           <AccessTimeIcon sx={{ mr: 1, fontSize: 16, color: 'text.secondary' }} />
                           {formatDuration(visitor.checkInTime, visitor.checkOutTime)}

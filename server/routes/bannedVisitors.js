@@ -145,6 +145,21 @@ router.post('/', auth, authorize('admin', 'site_manager'), [
       console.error('Error creating banned visitor activity:', activityError);
     }
 
+    // Emit realtime update for reports
+    try {
+      const io = req.app.get('io');
+      if (io) {
+        const siteId = bannedVisitor.site ? bannedVisitor.site.toString() : site;
+        io.emit('banned_changed', { action: 'created', siteId, bannedVisitorId: bannedVisitor._id.toString() });
+        if (siteId) {
+          io.to(`site_${siteId}`).emit('banned_changed', { action: 'created', siteId, bannedVisitorId: bannedVisitor._id.toString() });
+          io.to(`site_${siteId}`).emit('reports_refresh', { siteId, reason: 'banned_created' });
+        }
+      }
+    } catch (e) {
+      console.error('Realtime emit error (banned created):', e);
+    }
+
     res.status(201).json({
       message: 'Visitor added to banned list successfully',
       bannedVisitor
@@ -201,6 +216,21 @@ router.put('/:id', auth, authorize('admin', 'site_manager'), [
       return res.status(404).json({ message: 'Banned visitor not found' });
     }
 
+    // Emit realtime update for reports
+    try {
+      const io = req.app.get('io');
+      if (io) {
+        const siteId = bannedVisitor.site ? bannedVisitor.site.toString() : undefined;
+        io.emit('banned_changed', { action: 'updated', siteId, bannedVisitorId: bannedVisitor._id.toString() });
+        if (siteId) {
+          io.to(`site_${siteId}`).emit('banned_changed', { action: 'updated', siteId, bannedVisitorId: bannedVisitor._id.toString() });
+          io.to(`site_${siteId}`).emit('reports_refresh', { siteId, reason: 'banned_updated' });
+        }
+      }
+    } catch (e) {
+      console.error('Realtime emit error (banned updated):', e);
+    }
+
     res.json({
       message: 'Banned visitor updated successfully',
       bannedVisitor
@@ -224,6 +254,21 @@ router.delete('/:id', auth, authorize('admin', 'site_manager'), async (req, res)
     // Soft delete by setting isActive to false
     bannedVisitor.isActive = false;
     await bannedVisitor.save();
+
+    // Emit realtime update for reports
+    try {
+      const io = req.app.get('io');
+      if (io) {
+        const siteId = bannedVisitor.site ? bannedVisitor.site.toString() : undefined;
+        io.emit('banned_changed', { action: 'removed', siteId, bannedVisitorId: bannedVisitor._id.toString() });
+        if (siteId) {
+          io.to(`site_${siteId}`).emit('banned_changed', { action: 'removed', siteId, bannedVisitorId: bannedVisitor._id.toString() });
+          io.to(`site_${siteId}`).emit('reports_refresh', { siteId, reason: 'banned_removed' });
+        }
+      }
+    } catch (e) {
+      console.error('Realtime emit error (banned removed):', e);
+    }
 
     res.json({ message: 'Visitor removed from banned list successfully' });
   } catch (error) {
@@ -259,6 +304,21 @@ router.post('/:id/review', auth, authorize('admin', 'site_manager'), [
 
     if (!bannedVisitor) {
       return res.status(404).json({ message: 'Banned visitor not found' });
+    }
+
+    // Emit realtime update for reports
+    try {
+      const io = req.app.get('io');
+      if (io) {
+        const siteId = bannedVisitor.site ? bannedVisitor.site.toString() : undefined;
+        io.emit('banned_changed', { action: 'reviewed', siteId, bannedVisitorId: bannedVisitor._id.toString() });
+        if (siteId) {
+          io.to(`site_${siteId}`).emit('banned_changed', { action: 'reviewed', siteId, bannedVisitorId: bannedVisitor._id.toString() });
+          io.to(`site_${siteId}`).emit('reports_refresh', { siteId, reason: 'banned_reviewed' });
+        }
+      }
+    } catch (e) {
+      console.error('Realtime emit error (banned reviewed):', e);
     }
 
     res.json({

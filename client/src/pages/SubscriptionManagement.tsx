@@ -50,8 +50,10 @@ import {
 } from '@stripe/react-stripe-js';
 import axios from 'axios';
 
-// Initialize Stripe
-const stripePromise = loadStripe(process.env.REACT_APP_STRIPE_PUBLISHABLE_KEY || 'pk_test_your_publishable_key');
+// Initialize Stripe only if a valid publishable key is provided via env.
+// This prevents development builds from trying to fetch Stripe.js with a placeholder key.
+const publishableKey = process.env.REACT_APP_STRIPE_PUBLISHABLE_KEY;
+const stripePromise = publishableKey ? loadStripe(publishableKey) : null;
 
 interface Site {
   _id: string;

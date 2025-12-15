@@ -100,7 +100,7 @@ router.put('/:id/reset-password', auth, authorize('admin'), [
 // @access  Private
 router.get('/', auth, async (req, res) => {
   try {
-    const { siteId, role } = req.query;
+    const { siteId, role, isActive } = req.query;
     const user = req.user;
 
     console.log('GET /api/users - User:', {
@@ -143,6 +143,11 @@ router.get('/', auth, async (req, res) => {
 
     if (role) {
       query.role = role;
+    }
+
+    // Apply status filter if provided (expects 'true' or 'false')
+    if (typeof isActive === 'string' && (isActive === 'true' || isActive === 'false')) {
+      query.isActive = (isActive === 'true');
     }
 
     console.log('User query:', JSON.stringify(query));

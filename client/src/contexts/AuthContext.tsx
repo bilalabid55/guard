@@ -64,6 +64,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   useEffect(() => {
     const token = localStorage.getItem('token');
     if (token) {
+      // Ensure all subsequent requests include the bearer token
+      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
       // Verify token and get user info
       axios.get('/api/auth/me')
         .then((response) => {
@@ -71,6 +73,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         })
         .catch(() => {
           localStorage.removeItem('token');
+          delete axios.defaults.headers.common['Authorization'];
         })
         .finally(() => {
           setLoading(false);
@@ -86,6 +89,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       const { token, user: userData } = response.data;
       
       localStorage.setItem('token', token);
+      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
       setUser(userData);
     } catch (error: any) {
       throw new Error(error.response?.data?.message || 'Login failed');
@@ -94,6 +98,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const logout = () => {
     localStorage.removeItem('token');
+    delete axios.defaults.headers.common['Authorization'];
     setUser(null);
     axios.post('/api/auth/logout').catch(() => {
       // Ignore logout errors
