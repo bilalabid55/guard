@@ -1,640 +1,643 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Button, Container, Typography, Box, Grid, Card, CardContent, useTheme, useMediaQuery, Avatar, Chip } from '@mui/material';
-import { styled, alpha } from '@mui/material/styles';
-import SecurityIcon from '@mui/icons-material/Security';
-import GroupIcon from '@mui/icons-material/Group';
-import DashboardIcon from '@mui/icons-material/Dashboard';
-import CheckCircleIcon from '@mui/icons-material/CheckCircle';
-import SpeedIcon from '@mui/icons-material/Speed';
-import VerifiedUserIcon from '@mui/icons-material/VerifiedUser';
-import PeopleAltIcon from '@mui/icons-material/PeopleAlt';
-import ConstructionIcon from '@mui/icons-material/Construction';
+import { 
+  Button, 
+  Container, 
+  Typography, 
+  Box, 
+  Grid, 
+  AppBar, 
+  Toolbar, 
+  useScrollTrigger,
+  useTheme,
+  useMediaQuery,
+  IconButton
+} from '@mui/material';
+import { styled } from '@mui/material/styles';
+import MenuIcon from '@mui/icons-material/Menu';
 
-const HeroSection = styled(Box)(({ theme }) => ({
+// Styled Components
+const HeroSection = styled('section')(({ theme }) => ({
+  background: 'linear-gradient(135deg, #2c3e50 0%, #3498db 100%)',
+  color: theme.palette.common.white,
+  padding: theme.spacing(20, 0, 15),
   position: 'relative',
-  color: theme.palette.primary.contrastText,
-  padding: theme.spacing(3, 0, 10),
   overflow: 'hidden',
-  backgroundColor: theme.palette.primary.dark,
+  minHeight: '100vh',
+  display: 'flex',
+  alignItems: 'center',
   '&::before': {
     content: '""',
     position: 'absolute',
-    inset: 0,
-    backgroundImage: 'url("https://images.unsplash.com/photo-1526045612212-70caf35c14df?q=80&w=2000&auto=format&fit=crop")',
-    backgroundSize: 'cover',
-    backgroundPosition: 'center',
-    opacity: 0.25,
-  },
-  '&::after': {
-    content: '""',
-    position: 'absolute',
-    inset: 0,
-    background: `linear-gradient(90deg, ${alpha(theme.palette.primary.dark, 0.95)} 0%, ${alpha(theme.palette.primary.dark, 0.55)} 55%, ${alpha(theme.palette.primary.dark, 0.2)} 100%)`,
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundImage: 'url("data:image/svg+xml,%3Csvg width=\'100\' height=\'100\' viewBox=\'0 0 100 100\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cpath d=\'M11 18c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm48 25c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm-43-7c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm63 31c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM34 90c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm56-76c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM12 86c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm28-65c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm23-11c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-6 60c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm29 22c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zM32 63c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm57-13c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-9-21c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM60 91c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM35 41c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM12 60c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2z\' fill=\'%23ffffff\' fill-opacity=\'0.1\' fill-rule=\'evenodd\'/%3E%3C/svg%3E")',
+    opacity: 0.5,
   },
 }));
 
-const FeatureCard = styled(Card)(({ theme }) => ({
-  height: '100%',
-  display: 'flex',
-  flexDirection: 'column',
-  borderRadius: theme.shape.borderRadius * 2,
-  overflow: 'hidden',
-  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-  border: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
-  '&:hover': {
-    transform: 'translateY(-8px)',
-    boxShadow: theme.shadows[10],
-    '& .feature-icon': {
-      transform: 'scale(1.1)',
-      color: theme.palette.primary.main,
+const Navbar = styled(AppBar)(({ theme }) => ({
+  backgroundColor: 'transparent',
+  boxShadow: 'none',
+  padding: theme.spacing(3, 0),
+  '& .MuiToolbar-root': {
+    justifyContent: 'space-between',
+    padding: 0,
+  },
+  '& .MuiButton-root': {
+    textTransform: 'none',
+    fontWeight: 500,
+    marginLeft: theme.spacing(2),
+    color: theme.palette.common.white,
+    '&:hover': {
+      backgroundColor: 'rgba(255, 255, 255, 0.1)',
     },
   },
 }));
 
-const FeatureIconWrapper = styled(Box)(({ theme }) => ({
-  display: 'inline-flex',
-  padding: theme.spacing(2),
-  borderRadius: '50%',
-  marginBottom: theme.spacing(3),
-  transition: 'all 0.3s ease',
-  background: `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.1)} 0%, ${alpha(theme.palette.secondary.main, 0.1)} 100%)`,
-  '& svg': {
-    fontSize: 40,
-    color: theme.palette.primary.main,
+const HeroContent = styled(Box)(({ theme }) => ({
+  position: 'relative',
+  zIndex: 1,
+  maxWidth: 600,
+  '& h1': {
+    fontSize: '3.5rem',
+    fontWeight: 700,
+    lineHeight: 1.2,
+    marginBottom: theme.spacing(3),
+    [theme.breakpoints.down('md')]: {
+      fontSize: '2.5rem',
+    },
+  },
+  '& p': {
+    fontSize: '1.25rem',
+    marginBottom: theme.spacing(4),
+    opacity: 0.9,
   },
 }));
 
-const AnimatedContainer = styled('div')({});
+const PrimaryButton = styled(Button)(({ theme }) => ({
+  padding: theme.spacing(1.5, 4),
+  borderRadius: '50px',
+  textTransform: 'none',
+  fontSize: '1.1rem',
+  fontWeight: 600,
+  boxShadow: '0 4px 14px rgba(0, 0, 0, 0.25)',
+  marginRight: theme.spacing(2),
+  [theme.breakpoints.down('sm')]: {
+    width: '100%',
+    marginBottom: theme.spacing(2),
+    marginRight: 0,
+  },
+}));
+
+const SecondaryButton = styled(Button)(({ theme }) => ({
+  padding: theme.spacing(1.5, 4),
+  borderRadius: '50px',
+  textTransform: 'none',
+  fontSize: '1.1rem',
+  fontWeight: 500,
+  border: '2px solid white',
+  '&:hover': {
+    border: '2px solid white',
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  [theme.breakpoints.down('sm')]: {
+    width: '100%',
+  },
+}));
 
 const Home: React.FC = () => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  const [mobileOpen, setMobileOpen] = React.useState(false);
+
+  const handleDrawerToggle = () => {
+    setMobileOpen(!mobileOpen);
+  };
+
+  const navItems = [
+    { name: 'Home', href: '#' },
+    { name: 'Features', href: '#features' },
+    { name: 'Pricing', href: '#pricing' },
+    { name: 'Contact', href: '#contact' },
+  ];
 
   return (
-    <Box>
-      <HeroSection>
-        <Container maxWidth="lg" sx={{ position: 'relative', zIndex: 1 }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', py: 2 }}>
-            <Typography sx={{ fontWeight: 800, letterSpacing: 0.2 }}>
+    <>
+      {/* Navigation */}
+      <Navbar position="fixed" elevation={0}>
+        <Container maxWidth="lg">
+          <Toolbar disableGutters>
+            <Typography variant="h6" component="div" sx={{ flexGrow: 1, fontWeight: 700, fontSize: '1.5rem' }}>
               AcsoGuard
             </Typography>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-              <Button
-                component="a"
-                href="#features"
+            
+            {isMobile ? (
+              <IconButton
                 color="inherit"
-                sx={{ textTransform: 'none', fontWeight: 600, opacity: 0.9 }}
+                aria-label="open drawer"
+                edge="start"
+                onClick={handleDrawerToggle}
+                sx={{ display: { xs: 'block', md: 'none' } }}
               >
-                Features
-              </Button>
-              <Button
-                component="a"
-                href="https://app.acsoguard.com/login"
-                variant="text"
-                color="inherit"
-                sx={{ textTransform: 'none', fontWeight: 700, opacity: 0.95 }}
-              >
-                Login
-              </Button>
-              <Button
-                component="a"
-                href="https://app.acsoguard.com/register"
-                variant="contained"
-                color="secondary"
-                sx={{ textTransform: 'none', fontWeight: 800, borderRadius: 999, px: 2.5 }}
-              >
-                Register
-              </Button>
-            </Box>
-          </Box>
-
-          <AnimatedContainer>
-            <Grid container spacing={6} alignItems="center" sx={{ pt: { xs: 4, md: 7 } }}>
-              <Grid item xs={12} md={6}>
-                <Chip
-                  label="Visitor & Contractor Management"
-                  sx={{
-                    bgcolor: alpha(theme.palette.common.white, 0.12),
-                    color: 'white',
-                    fontWeight: 700,
-                    mb: 2,
-                  }}
-                />
-                <Typography
-                  variant={isMobile ? 'h3' : 'h2'}
-                  component="h1"
-                  sx={{ fontWeight: 900, lineHeight: 1.05, mb: 2 }}
-                >
-                  Visitor Management,
-                  <Box component="span" sx={{ color: theme.palette.secondary.light }}>
-                    {' '}made for secure sites.
-                  </Box>
-                </Typography>
-
-                <Typography
-                  variant={isMobile ? 'body1' : 'h6'}
-                  sx={{ opacity: 0.9, mb: 4, maxWidth: 560 }}
-                >
-                  AcsoGuard helps construction teams manage check-ins, approvals, contractor access, and audit-ready compliance from one dashboard.
-                </Typography>
-
-                <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
-                  <Button
-                    variant="contained"
-                    color="secondary"
-                    size={isMobile ? 'medium' : 'large'}
-                    component="a"
-                    href="https://app.acsoguard.com/register"
-                    sx={{ borderRadius: 999, textTransform: 'none', fontWeight: 800, px: 3.5 }}
-                  >
-                    Create account
+                <MenuIcon />
+              </IconButton>
+            ) : (
+              <Box sx={{ display: 'flex' }}>
+                {navItems.map((item) => (
+                  <Button key={item.name} href={item.href}>
+                    {item.name}
                   </Button>
-                  <Button
-                    variant="outlined"
-                    color="inherit"
-                    size={isMobile ? 'medium' : 'large'}
-                    component="a"
-                    href="https://app.acsoguard.com/login"
-                    sx={{ borderRadius: 999, textTransform: 'none', fontWeight: 800, px: 3.5 }}
-                  >
-                    Sign in
-                  </Button>
-                </Box>
-
-                <Box sx={{ mt: 3, display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-                  {['Access control', 'Audit logs', 'Real-time insights'].map((t) => (
-                    <Chip key={t} label={t} size="small" sx={{ bgcolor: alpha(theme.palette.common.white, 0.1), color: 'white' }} />
-                  ))}
-                </Box>
-              </Grid>
-
-              <Grid item xs={12} md={6}>
-                <Box
-                  sx={{
-                    borderRadius: 3,
-                    overflow: 'hidden',
-                    border: `1px solid ${alpha(theme.palette.common.white, 0.18)}`,
-                    boxShadow: '0 24px 60px rgba(0,0,0,0.45)',
-                    bgcolor: alpha(theme.palette.common.white, 0.04),
-                  }}
-                >
-                  <Box
-                    component="img"
-                    src="https://images.unsplash.com/photo-1560448070-cfd26b7023f1?q=80&w=1600&auto=format&fit=crop"
-                    alt="AcsoGuard visitor check-in"
-                    sx={{ width: '100%', height: { xs: 260, md: 360 }, objectFit: 'cover', display: 'block' }}
-                  />
-                </Box>
-              </Grid>
-            </Grid>
-
-            <Box sx={{ mt: { xs: 6, md: 8 }, textAlign: 'left' }}>
-              <Typography variant="subtitle2" sx={{ opacity: 0.8, fontWeight: 800, letterSpacing: 1 }}>
-                ENGINEERED FOR ENTERPRISE COMPLIANCE
-              </Typography>
-              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1.25, mt: 2 }}>
-                {['Construction', 'Manufacturing', 'Facilities', 'Contractors'].map((name) => (
-                  <Chip key={name} label={name} sx={{ bgcolor: alpha(theme.palette.common.white, 0.08), color: 'white' }} />
                 ))}
+                <Button 
+                  href="https://app.acsoguard.com/login"
+                  variant="outlined"
+                  sx={{
+                    borderColor: 'white',
+                    borderWidth: '2px',
+                    borderRadius: '50px',
+                    '&:hover': {
+                      borderWidth: '2px',
+                      backgroundColor: 'rgba(255, 255, 255, 0.1)'
+                    },
+                  }}
+                >
+                  Login
+                </Button>
               </Box>
-            </Box>
-          </AnimatedContainer>
+            )}
+          </Toolbar>
+        </Container>
+      </Navbar>
+
+      {/* Hero Section */}
+      <HeroSection>
+        <Container maxWidth="lg">
+          <Grid container spacing={6} alignItems="center">
+            <Grid item xs={12} md={6}>
+              <HeroContent>
+                <Typography variant="h1" component="h1">
+                  Secure Your Construction Site with Confidence
+                </Typography>
+                <Typography variant="body1">
+                  Advanced security solutions designed specifically for construction sites. 
+                  Monitor, manage, and protect your assets with our comprehensive platform.
+                </Typography>
+                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
+                  <PrimaryButton 
+                    variant="contained" 
+                    color="primary"
+                    href="https://app.acsoguard.com/register"
+                  >
+                    Get Started Free
+                  </PrimaryButton>
+                  <SecondaryButton 
+                    variant="outlined" 
+                    href="https://app.acsoguard.com/login"
+                  >
+                    Login
+                  </SecondaryButton>
+                </Box>
+              </HeroContent>
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <Box
+                aria-label="Construction site security"
+                sx={{
+                  width: '100%',
+                  height: 400,
+                  borderRadius: '12px',
+                  overflow: 'hidden',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  position: 'relative',
+                  background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
+                  border: `1px solid ${theme.palette.divider}`,
+                }}
+              >
+                <img 
+                  src="https://images.unsplash.com/photo-1560448070-cfd26b7023f1?q=80&w=1200&auto=format&fit=crop" 
+                  alt="Construction site security" 
+                  style={{ 
+                    width: '100%', 
+                    borderRadius: '12px',
+                    height: '100%',
+                    objectFit: 'cover',
+                  }} 
+                />
+              </Box>
+            </Grid>
+          </Grid>
         </Container>
       </HeroSection>
 
-      <Box id="features" sx={{ py: 10, bgcolor: 'background.default' }}>
+      {/* Features Section */}
+      <Box id="features" sx={{ py: 10, backgroundColor: theme.palette.background.default }}>
         <Container maxWidth="lg">
           <Box textAlign="center" mb={8}>
             <Typography 
-              variant="h3" 
+              variant="h4" 
               component="h2" 
-              gutterBottom
-              sx={{
-                fontWeight: 700,
+              sx={{ 
+                fontWeight: 700, 
+                mb: 2,
+                color: theme.palette.text.primary,
                 position: 'relative',
                 display: 'inline-block',
-                '&:after': {
+                '&::after': {
                   content: '""',
                   position: 'absolute',
-                  width: '60%',
-                  height: '4px',
-                  bottom: '-10px',
-                  left: '20%',
+                  bottom: -10,
+                  left: '50%',
+                  transform: 'translateX(-50%)',
+                  width: 60,
+                  height: 4,
                   backgroundColor: theme.palette.primary.main,
-                  borderRadius: '2px',
-                },
+                  borderRadius: 2,
+                }
               }}
             >
-              Powerful Features for Your Construction Site
+              Our Features
             </Typography>
-            <Typography variant="h6" color="text.secondary" sx={{ maxWidth: '700px', mx: 'auto', mt: 3 }}>
-              Everything you need to manage site access, track visitors, and ensure security compliance
+            <Typography 
+              variant="h6" 
+              color="textSecondary" 
+              sx={{ 
+                maxWidth: 700, 
+                mx: 'auto',
+                mt: 3,
+                color: theme.palette.text.secondary,
+              }}
+            >
+              Powerful features to keep your construction site secure and monitored 24/7
             </Typography>
           </Box>
-          
-          <Grid container spacing={4} sx={{ mt: 2 }}>
-            <Grid item xs={12} md={4}>
-              <Box sx={{ height: '100%' }}>
-                <FeatureCard>
-                  <CardContent sx={{ p: 4, height: '100%', display: 'flex', flexDirection: 'column' }}>
-                    <FeatureIconWrapper className="feature-icon">
-                      <VerifiedUserIcon />
-                    </FeatureIconWrapper>
-                    <Typography variant="h5" gutterBottom sx={{ fontWeight: 600, mb: 2 }}>
-                      Secure Access Control
-                    </Typography>
-                    <Typography color="text.secondary" sx={{ mb: 3, flexGrow: 1 }}>
-                      Advanced biometric and QR-code based access control with real-time monitoring and alerts for unauthorized access attempts.
-                    </Typography>
-                    <Box sx={{ mt: 'auto' }}>
-                      <img 
-                        src="https://images.unsplash.com/photo-1600880292203-757bb62b4baf?q=80&w=1200&auto=format&fit=crop" 
-                        alt="Secure access control" 
-                        style={{ 
-                          width: '100%', 
-                          borderRadius: '12px',
-                          height: '180px',
-                          objectFit: 'cover',
-                        }} 
-                      />
-                    </Box>
-                  </CardContent>
-                </FeatureCard>
-              </Box>
-            </Grid>
-            
-            <Grid item xs={12} md={4}>
-              <Box sx={{ height: '100%' }}>
-                <FeatureCard>
-                  <CardContent sx={{ p: 4, height: '100%', display: 'flex', flexDirection: 'column' }}>
-                    <FeatureIconWrapper className="feature-icon">
-                      <PeopleAltIcon />
-                    </FeatureIconWrapper>
-                    <Typography variant="h5" gutterBottom sx={{ fontWeight: 600, mb: 2 }}>
-                      Visitor Management
-                    </Typography>
-                    <Typography color="text.secondary" sx={{ mb: 3, flexGrow: 1 }}>
-                      Streamline visitor check-ins, check-outs, and badge printing with our intuitive digital system.
-                    </Typography>
-                    <Box sx={{ mt: 'auto' }}>
-                      <Box
-                        aria-label="Visitor management"
-                        sx={{
-                          width: '100%',
-                          height: 180,
-                          borderRadius: '12px',
-                          overflow: 'hidden',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          position: 'relative',
-                          background: `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.15)} 0%, ${alpha(theme.palette.secondary.main, 0.12)} 100%)`,
-                          border: `1px solid ${alpha(theme.palette.divider, 0.12)}`,
-                        }}
-                      >
-                        <Box
-                          sx={{
-                            position: 'absolute',
-                            inset: 0,
-                            backgroundImage:
-                              'radial-gradient(circle at 20% 20%, rgba(255,255,255,0.55) 0, rgba(255,255,255,0) 45%), radial-gradient(circle at 80% 40%, rgba(255,255,255,0.35) 0, rgba(255,255,255,0) 50%)',
-                            opacity: 0.9,
-                          }}
-                        />
-                        <Box sx={{ position: 'relative', textAlign: 'center' }}>
-                          <PeopleAltIcon sx={{ fontSize: 54, color: 'primary.main', mb: 1 }} />
-                          <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
-                            Fast Check-in / Check-out
-                          </Typography>
-                          <Typography variant="caption" color="text.secondary">
-                            Badges, approvals, and logs
-                          </Typography>
-                        </Box>
-                      </Box>
-                    </Box>
-                  </CardContent>
-                </FeatureCard>
-              </Box>
-            </Grid>
-            
-            <Grid item xs={12} md={4}>
-              <Box sx={{ height: '100%' }}>
-                <FeatureCard>
-                  <CardContent sx={{ p: 4, height: '100%', display: 'flex', flexDirection: 'column' }}>
-                    <FeatureIconWrapper className="feature-icon">
-                      <SpeedIcon />
-                    </FeatureIconWrapper>
-                    <Typography variant="h5" gutterBottom sx={{ fontWeight: 600, mb: 2 }}>
-                      Real-time Analytics
-                    </Typography>
-                    <Typography color="text.secondary" sx={{ mb: 3, flexGrow: 1 }}>
-                      Comprehensive dashboards with real-time data visualization for monitoring site activity and security metrics.
-                    </Typography>
-                    <Box sx={{ mt: 'auto' }}>
-                      <img 
-                        src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?q=80&w=1200&auto=format&fit=crop" 
-                        alt="Analytics dashboard" 
-                        style={{ 
-                          width: '100%', 
-                          borderRadius: '12px',
-                          height: '180px',
-                          objectFit: 'cover',
-                        }} 
-                      />
-                    </Box>
-                  </CardContent>
-                </FeatureCard>
-              </Box>
-            </Grid>
-            
-            <Grid item xs={12} md={4}>
-              <Box sx={{ height: '100%' }}>
-                <FeatureCard>
-                  <CardContent sx={{ p: 4, height: '100%', display: 'flex', flexDirection: 'column' }}>
-                    <FeatureIconWrapper className="feature-icon">
-                      <CheckCircleIcon />
-                    </FeatureIconWrapper>
-                    <Typography variant="h5" gutterBottom sx={{ fontWeight: 600, mb: 2 }}>
-                      Compliance & Reporting
-                    </Typography>
-                    <Typography color="text.secondary" sx={{ mb: 3, flexGrow: 1 }}>
-                      Automated compliance tracking and reporting to meet industry standards and regulations.
-                    </Typography>
-                    <Box sx={{ mt: 'auto' }}>
-                      <img 
-                        src="https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?q=80&w=1200&auto=format&fit=crop" 
-                        alt="Compliance reporting" 
-                        style={{ 
-                          width: '100%', 
-                          borderRadius: '12px',
-                          height: '180px',
-                          objectFit: 'cover',
-                        }} 
-                      />
-                    </Box>
-                  </CardContent>
-                </FeatureCard>
-              </Box>
-            </Grid>
-            
-            <Grid item xs={12} md={4}>
-              <Box sx={{ height: '100%' }}>
-                <FeatureCard>
-                  <CardContent sx={{ p: 4, height: '100%', display: 'flex', flexDirection: 'column' }}>
-                    <FeatureIconWrapper className="feature-icon">
-                      <SecurityIcon />
-                    </FeatureIconWrapper>
-                    <Typography variant="h5" gutterBottom sx={{ fontWeight: 600, mb: 2 }}>
-                      Emergency Response
-                    </Typography>
-                    <Typography color="text.secondary" sx={{ mb: 3, flexGrow: 1 }}>
-                      Instant emergency alerts and automated roll call to ensure everyone's safety during critical situations.
-                    </Typography>
-                    <Box sx={{ mt: 'auto' }}>
-                      <img 
-                        src="https://images.unsplash.com/photo-1581092918056-0c4c3acd3789?q=80&w=1200&auto=format&fit=crop" 
-                        alt="Emergency response" 
-                        style={{ 
-                          width: '100%', 
-                          borderRadius: '12px',
-                          height: '180px',
-                          objectFit: 'cover',
-                        }} 
-                      />
-                    </Box>
-                  </CardContent>
-                </FeatureCard>
-              </Box>
-            </Grid>
-            
-            <Grid item xs={12} md={4}>
-              <Box sx={{ height: '100%' }}>
-                <FeatureCard>
-                  <CardContent sx={{ p: 4, height: '100%', display: 'flex', flexDirection: 'column' }}>
-                    <FeatureIconWrapper className="feature-icon">
-                      <ConstructionIcon />
-                    </FeatureIconWrapper>
-                    <Typography variant="h5" gutterBottom sx={{ fontWeight: 600, mb: 2 }}>
-                      Contractor Management
-                    </Typography>
-                    <Typography color="text.secondary" sx={{ mb: 3, flexGrow: 1 }}>
-                      Efficiently manage contractors, their credentials, and site access permissions in one centralized platform.
-                    </Typography>
-                    <Box sx={{ mt: 'auto' }}>
-                      <Box
-                        aria-label="Contractor management"
-                        sx={{
-                          width: '100%',
-                          height: 180,
-                          borderRadius: '12px',
-                          overflow: 'hidden',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          position: 'relative',
-                          background: `linear-gradient(135deg, ${alpha(theme.palette.secondary.main, 0.14)} 0%, ${alpha(theme.palette.primary.main, 0.10)} 100%)`,
-                          border: `1px solid ${alpha(theme.palette.divider, 0.12)}`,
-                        }}
-                      >
-                        <Box
-                          sx={{
-                            position: 'absolute',
-                            inset: 0,
-                            backgroundImage:
-                              'linear-gradient(45deg, rgba(255,255,255,0.25) 0, rgba(255,255,255,0) 55%), radial-gradient(circle at 70% 30%, rgba(255,255,255,0.4) 0, rgba(255,255,255,0) 55%)',
-                            opacity: 0.9,
-                          }}
-                        />
-                        <Box sx={{ position: 'relative', textAlign: 'center' }}>
-                          <ConstructionIcon sx={{ fontSize: 54, color: 'secondary.main', mb: 1 }} />
-                          <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
-                            Credential Tracking
-                          </Typography>
-                          <Typography variant="caption" color="text.secondary">
-                            Roles, access, and compliance
-                          </Typography>
-                        </Box>
-                      </Box>
-                    </Box>
-                  </CardContent>
-                </FeatureCard>
-              </Box>
-            </Grid>
+
+          <Grid container spacing={4}>
+            {[
+              {
+                icon: '🔒',
+                title: '24/7 Monitoring',
+                description: 'Round-the-clock surveillance to ensure your construction site is always protected.'
+              },
+              {
+                icon: '🚨',
+                title: 'Real-time Alerts',
+                description: 'Instant notifications for any security breaches or unusual activities on your site.'
+              },
+              {
+                icon: '📱',
+                title: 'Mobile Access',
+                description: 'Monitor your site from anywhere with our easy-to-use mobile application.'
+              },
+              {
+                icon: '📊',
+                title: 'Analytics Dashboard',
+                description: 'Get insights and reports on site activity and security events.'
+              },
+              {
+                icon: '👥',
+                title: 'Visitor Management',
+                description: 'Track and manage all visitors to your construction site efficiently.'
+              },
+              {
+                icon: '🛡️',
+                title: 'Access Control',
+                description: 'Control who enters your site with our advanced access management system.'
+              },
+            ].map((feature, index) => (
+              <Grid item xs={12} sm={6} md={4} key={index}>
+                <Box 
+                  sx={{
+                    height: '100%',
+                    p: 4,
+                    borderRadius: 2,
+                    backgroundColor: theme.palette.background.paper,
+                    boxShadow: '0 4px 20px rgba(0, 0, 0, 0.05)',
+                    transition: 'transform 0.3s ease, box-shadow 0.3s ease',
+                    '&:hover': {
+                      transform: 'translateY(-5px)',
+                      boxShadow: '0 8px 25px rgba(0, 0, 0, 0.1)',
+                    },
+                    textAlign: 'center',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                  }}
+                >
+                  <Box 
+                    sx={{
+                      width: 70,
+                      height: 70,
+                      borderRadius: '50%',
+                      backgroundColor: theme.palette.primary.light,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      mb: 3,
+                      fontSize: '2rem',
+                      color: theme.palette.primary.contrastText,
+                    }}
+                  >
+                    {feature.icon}
+                  </Box>
+                  <Typography 
+                    variant="h6" 
+                    component="h3" 
+                    sx={{ 
+                      fontWeight: 600, 
+                      mb: 2,
+                      color: theme.palette.text.primary,
+                    }}
+                  >
+                    {feature.title}
+                  </Typography>
+                  <Typography 
+                    variant="body1" 
+                    color="textSecondary"
+                    sx={{
+                      color: theme.palette.text.secondary,
+                      flexGrow: 1,
+                    }}
+                  >
+                    {feature.description}
+                  </Typography>
+                </Box>
+              </Grid>
+            ))}
           </Grid>
+
+          <Box textAlign="center" mt={8}>
+            <PrimaryButton 
+              variant="contained" 
+              size="large"
+              href="https://app.acsoguard.com/register"
+              sx={{
+                px: 6,
+                py: 1.5,
+                fontSize: '1rem',
+              }}
+            >
+              Get Started for Free
+            </PrimaryButton>
+          </Box>
         </Container>
       </Box>
 
-      {/* Testimonials Section */}
-      <Box sx={{ py: 10, bgcolor: 'background.paper' }}>
+      {/* Footer */}
+      <Box 
+        component="footer" 
+        sx={{ 
+          backgroundColor: theme.palette.grey[900],
+          color: 'white',
+          pt: 8,
+          pb: 4,
+        }}
+      >
         <Container maxWidth="lg">
-          <Typography variant="h3" align="center" sx={{ mb: 8, fontWeight: 700 }}>
-            Trusted by Leading Construction Companies
-          </Typography>
-          
-          <Grid container spacing={4} alignItems="center">
-            <Grid item xs={12} md={6}>
-              <Box>
-                <Box sx={{ 
-                  p: 4, 
-                  borderRadius: 4, 
-                  bgcolor: 'background.default',
-                  boxShadow: theme.shadows[2],
-                  position: 'relative',
-                  '&:before': {
-                    content: '"\\\\201C"',
-                    position: 'absolute',
-                    top: 20,
-                    left: 20,
-                    fontSize: '5rem',
-                    color: theme.palette.primary.light,
-                    fontFamily: 'Georgia, serif',
-                    lineHeight: 1,
-                    opacity: 0.3,
-                  }
-                }}>
-                  <Typography variant="h6" sx={{ mb: 2, fontWeight: 600, pl: 4, mt: 2 }}>
-                    "Game-Changing Solution"
-                  </Typography>
-                  <Typography color="text.secondary" sx={{ mb: 3, fontStyle: 'italic' }}>
-                    Since implementing AcsoGuard, we've seen a 60% reduction in unauthorized site access and our site managers save hours every week on visitor management. The real-time alerts have been invaluable for security.
-                  </Typography>
-                  <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                    <Avatar sx={{ width: 50, height: 50, mr: 2, bgcolor: 'primary.main' }}>JD</Avatar>
-                    <Box>
-                      <Typography variant="subtitle1" fontWeight={600}>John D.</Typography>
-                      <Typography variant="body2" color="text.secondary">Site Manager, ConstructPro</Typography>
-                    </Box>
-                  </Box>
-                </Box>
+          <Grid container spacing={6}>
+            <Grid item xs={12} md={4}>
+              <Typography 
+                variant="h6" 
+                component="h3" 
+                sx={{ 
+                  fontWeight: 700, 
+                  mb: 3,
+                  color: 'white',
+                }}
+              >
+                AcsoGuard
+              </Typography>
+              <Typography 
+                variant="body1" 
+                sx={{ 
+                  mb: 3, 
+                  color: 'rgba(255, 255, 255, 0.7)',
+                  lineHeight: 1.7,
+                }}
+              >
+                Advanced security solutions for construction sites. 
+                Monitor, manage, and protect your assets with our comprehensive platform.
+              </Typography>
+              <Box sx={{ display: 'flex', gap: 2, mb: 3 }}>
+                {['Facebook', 'Twitter', 'LinkedIn', 'Instagram'].map((social) => (
+                  <IconButton
+                    key={social}
+                    sx={{
+                      color: 'white',
+                      backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                      '&:hover': {
+                        backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                      },
+                    }}
+                  >
+                    {social === 'Facebook' && <FacebookIcon />}
+                    {social === 'Twitter' && <TwitterIcon />}
+                    {social === 'LinkedIn' && <LinkedInIcon />}
+                    {social === 'Instagram' && <InstagramIcon />}
+                  </IconButton>
+                ))}
               </Box>
             </Grid>
-            
-            <Grid item xs={12} md={6}>
-              <Box>
-                <Box sx={{ 
-                  p: 4, 
-                  borderRadius: 4, 
-                  bgcolor: 'background.default',
-                  boxShadow: theme.shadows[2],
-                  position: 'relative',
-                  '&:before': {
-                    content: '"\\\\201C"',
-                    position: 'absolute',
-                    top: 20,
-                    left: 20,
-                    fontSize: '5rem',
-                    color: theme.palette.primary.light,
-                    fontFamily: 'Georgia, serif',
-                    lineHeight: 1,
-                    opacity: 0.3,
-                  }
-                }}>
-                  <Typography variant="h6" sx={{ mb: 2, fontWeight: 600, pl: 4, mt: 2 }}>
-                    "Exceptional ROI"
-                  </Typography>
-                  <Typography color="text.secondary" sx={{ mb: 3, fontStyle: 'italic' }}>
-                    The compliance reporting alone has saved us countless hours during audits. The system paid for itself within the first three months. The team at AcsoGuard provided excellent support during implementation.
-                  </Typography>
-                  <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                    <Avatar sx={{ width: 50, height: 50, mr: 2, bgcolor: 'secondary.main' }}>SM</Avatar>
-                    <Box>
-                      <Typography variant="subtitle1" fontWeight={600}>Sarah M.</Typography>
-                      <Typography variant="body2" color="text.secondary">Operations Director, BuildRight Co.</Typography>
-                    </Box>
+
+            <Grid item xs={12} sm={6} md={2}>
+              <Typography 
+                variant="subtitle1" 
+                component="h4" 
+                sx={{ 
+                  fontWeight: 600, 
+                  mb: 3,
+                  color: 'white',
+                }}
+              >
+                Company
+              </Typography>
+              <Box component="ul" sx={{ listStyle: 'none', p: 0, m: 0 }}>
+                {['About Us', 'Careers', 'Blog', 'Press'].map((item) => (
+                  <Box 
+                    key={item} 
+                    component="li" 
+                    sx={{ mb: 1.5 }}
+                  >
+                    <Link 
+                      href="#" 
+                      style={{
+                        color: 'rgba(255, 255, 255, 0.7)',
+                        textDecoration: 'none',
+                        transition: 'color 0.2s',
+                        '&:hover': {
+                          color: theme.palette.primary.main,
+                        },
+                      }}
+                    >
+                      {item}
+                    </Link>
                   </Box>
-                </Box>
+                ))}
+              </Box>
+            </Grid>
+
+            <Grid item xs={12} sm={6} md={2}>
+              <Typography 
+                variant="subtitle1" 
+                component="h4" 
+                sx={{ 
+                  fontWeight: 600, 
+                  mb: 3,
+                  color: 'white',
+                }}
+              >
+                Product
+              </Typography>
+              <Box component="ul" sx={{ listStyle: 'none', p: 0, m: 0 }}>
+                {['Features', 'Pricing', 'Integrations', 'Updates'].map((item) => (
+                  <Box 
+                    key={item} 
+                    component="li" 
+                    sx={{ mb: 1.5 }}
+                  >
+                    <Link 
+                      href="#" 
+                      style={{
+                        color: 'rgba(255, 255, 255, 0.7)',
+                        textDecoration: 'none',
+                        transition: 'color 0.2s',
+                        '&:hover': {
+                          color: theme.palette.primary.main,
+                        },
+                      }}
+                    >
+                      {item}
+                    </Link>
+                  </Box>
+                ))}
+              </Box>
+            </Grid>
+
+            <Grid item xs={12} sm={6} md={4}>
+              <Typography 
+                variant="subtitle1" 
+                component="h4" 
+                sx={{ 
+                  fontWeight: 600, 
+                  mb: 3,
+                  color: 'white',
+                }}
+              >
+                Contact Us
+              </Typography>
+              <Box sx={{ mb: 2, display: 'flex', alignItems: 'center' }}>
+                <LocationOnIcon sx={{ mr: 2, color: theme.palette.primary.main }} />
+                <Typography 
+                  variant="body2" 
+                  sx={{ color: 'rgba(255, 255, 255, 0.7)' }}
+                >
+                  123 Construction St, Building 45<br />
+                  New York, NY 10001
+                </Typography>
+              </Box>
+              <Box sx={{ mb: 2, display: 'flex', alignItems: 'center' }}>
+                <EmailIcon sx={{ mr: 2, color: theme.palette.primary.main }} />
+                <Link 
+                  href="mailto:info@acsoguard.com" 
+                  style={{
+                    color: 'rgba(255, 255, 255, 0.7)',
+                    textDecoration: 'none',
+                    '&:hover': {
+                      color: theme.palette.primary.main,
+                    },
+                  }}
+                >
+                  info@acsoguard.com
+                </Link>
+              </Box>
+              <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                <PhoneIcon sx={{ mr: 2, color: theme.palette.primary.main }} />
+                <Link 
+                  href="tel:+11234567890" 
+                  style={{
+                    color: 'rgba(255, 255, 255, 0.7)',
+                    textDecoration: 'none',
+                    '&:hover': {
+                      color: theme.palette.primary.main,
+                    },
+                  }}
+                >
+                  +1 (123) 456-7890
+                </Link>
               </Box>
             </Grid>
           </Grid>
-          
-          <Box sx={{ mt: 8, textAlign: 'center' }}>
-            <Typography variant="subtitle1" color="text.secondary" sx={{ mb: 3 }}>TRUSTED BY LEADING COMPANIES</Typography>
-            <Box sx={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: 1.5 }}>
-              {['ConstructPro', 'BuildRight', 'Urban Builders', 'SteelFrame'].map((name) => (
-                <Chip key={name} label={name} variant="outlined" sx={{ bgcolor: 'background.paper' }} />
-              ))}
+
+          <Box 
+            sx={{ 
+              mt: 8, 
+              pt: 4, 
+              borderTop: '1px solid rgba(255, 255, 255, 0.1)',
+              display: 'flex',
+              flexDirection: { xs: 'column', sm: 'row' },
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              gap: 2,
+            }}
+          >
+            <Typography 
+              variant="body2" 
+              sx={{ 
+                color: 'rgba(255, 255, 255, 0.5)',
+                textAlign: { xs: 'center', sm: 'left' },
+              }}
+            >
+              © {new Date().getFullYear()} AcsoGuard. All rights reserved.
+            </Typography>
+            <Box sx={{ display: 'flex', gap: 3 }}>
+              <Link 
+                href="#" 
+                style={{
+                  color: 'rgba(255, 255, 255, 0.5)',
+                  textDecoration: 'none',
+                  fontSize: '0.875rem',
+                  '&:hover': {
+                    color: 'white',
+                  },
+                }}
+              >
+                Privacy Policy
+              </Link>
+              <Link 
+                href="#" 
+                style={{
+                  color: 'rgba(255, 255, 255, 0.5)',
+                  textDecoration: 'none',
+                  fontSize: '0.875rem',
+                  '&:hover': {
+                    color: 'white',
+                  },
+                }}
+              >
+                Terms of Service
+              </Link>
+              <Link 
+                href="#" 
+                style={{
+                  color: 'rgba(255, 255, 255, 0.5)',
+                  textDecoration: 'none',
+                  fontSize: '0.875rem',
+                  '&:hover': {
+                    color: 'white',
+                  },
+                }}
+              >
+                Cookie Policy
+              </Link>
             </Box>
           </Box>
         </Container>
       </Box>
-      
-      {/* CTA Section */}
-      <Box sx={{ 
-        py: 12, 
-        background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
-        color: 'white',
-        position: 'relative',
-        overflow: 'hidden',
-        '&::before': {
-          content: '""',
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundImage: 'url("data:image/svg+xml,%3Csvg width=\'100\' height=\'100\' viewBox=\'0 0 100 100\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cpath d=\'M11 18c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm48 25c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm-43-7c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm63 31c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM34 90c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm56-76c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM12 86c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm28-65c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm23-11c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-6 60c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm29 22c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zM32 63c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm57-13c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-9-21c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM60 91c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM35 41c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM12 60c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2z\' fill=\'%23ffffff\' fill-opacity=\'0.1\' fill-rule=\'evenodd\'/%3E%3C/svg%3E")',
-          opacity: 0.6,
-        },
-      }}>
-        <Container maxWidth="md" sx={{ position: 'relative', zIndex: 1, textAlign: 'center' }}>
-          <Box>
-            <Typography variant="h3" component="h2" sx={{ mb: 3, fontWeight: 700 }}>
-              Ready to Transform Your Site Security?
-            </Typography>
-            <Typography variant="h6" sx={{ mb: 5, opacity: 0.9, maxWidth: '700px', mx: 'auto' }}>
-              Join hundreds of construction companies who trust AcsoGuard to keep their sites secure and compliant.
-            </Typography>
-            <Box sx={{ display: 'flex', gap: 3, justifyContent: 'center', flexWrap: 'wrap' }}>
-              <Button
-                variant="contained"
-                color="secondary"
-                size="large"
-                component="a"
-                href="https://app.acsoguard.com/register"
-                sx={{
-                  px: 4,
-                  py: 1.5,
-                  borderRadius: '50px',
-                  textTransform: 'none',
-                  fontWeight: 600,
-                  fontSize: '1.1rem',
-                  boxShadow: '0 4px 14px rgba(0, 0, 0, 0.25)',
-                  '&:hover': {
-                    transform: 'translateY(-2px)',
-                    boxShadow: '0 6px 20px rgba(0, 0, 0, 0.3)',
-                  },
-                  transition: 'all 0.3s ease',
-                }}
-              >
-                Start Your Free Trial
-              </Button>
-              <Button
-                variant="outlined"
-                color="inherit"
-                size="large"
-                component={Link}
-                to="/contact"
-                sx={{
-                  px: 4,
-                  py: 1.5,
-                  borderRadius: '50px',
-                  textTransform: 'none',
-                  fontWeight: 600,
-                  fontSize: '1.1rem',
-                  borderWidth: '2px',
-                  color: 'white',
-                  borderColor: 'rgba(255, 255, 255, 0.3)',
-                  '&:hover': {
-                    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                    borderColor: 'white',
-                    borderWidth: '2px',
-                  },
-                }}
-              >
-                Schedule a Demo
-              </Button>
-            </Box>
+    </>
             <Typography variant="body2" sx={{ mt: 3, opacity: 0.8 }}>
               No credit card required • 14-day free trial • Cancel anytime
             </Typography>
