@@ -112,8 +112,8 @@ const Home: React.FC = () => {
                 variant="contained" 
                 color="secondary" 
                 size={isMobile ? 'medium' : 'large'}
-                component={Link} 
-                to="/register"
+                component="a"
+                href="https://app.acsoguard.com/register"
                 sx={{ 
                   px: 4,
                   py: 1.5,
@@ -134,8 +134,8 @@ const Home: React.FC = () => {
                 variant="outlined" 
                 color="inherit" 
                 size={isMobile ? 'medium' : 'large'}
-                component={Link} 
-                to="/login"
+                component="a"
+                href="https://app.acsoguard.com/login"
                 sx={{ 
                   px: 4,
                   py: 1.5,
@@ -556,8 +556,8 @@ const Home: React.FC = () => {
                 variant="contained"
                 color="secondary"
                 size="large"
-                component={Link}
-                to="/register"
+                component="a"
+                href="https://app.acsoguard.com/register"
                 sx={{
                   px: 4,
                   py: 1.5,
