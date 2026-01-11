@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { 
   Button, 
@@ -8,13 +8,19 @@ import {
   Grid, 
   AppBar, 
   Toolbar, 
-  useScrollTrigger,
   useTheme,
   useMediaQuery,
   IconButton
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import MenuIcon from '@mui/icons-material/Menu';
+import FacebookIcon from '@mui/icons-material/Facebook';
+import TwitterIcon from '@mui/icons-material/Twitter';
+import LinkedInIcon from '@mui/icons-material/LinkedIn';
+import InstagramIcon from '@mui/icons-material/Instagram';
+import LocationOnIcon from '@mui/icons-material/LocationOn';
+import EmailIcon from '@mui/icons-material/Email';
+import PhoneIcon from '@mui/icons-material/Phone';
 
 // Styled Components
 const HeroSection = styled('section')(({ theme }) => ({
@@ -111,7 +117,7 @@ const SecondaryButton = styled(Button)(({ theme }) => ({
 const Home: React.FC = () => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
-  const [mobileOpen, setMobileOpen] = React.useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   const handleDrawerToggle = () => {
     setMobileOpen(!mobileOpen);
@@ -455,26 +461,26 @@ const Home: React.FC = () => {
               >
                 Company
               </Typography>
-              <Box component="ul" sx={{ listStyle: 'none', p: 0, m: 0 }}>
                 {['About Us', 'Careers', 'Blog', 'Press'].map((item) => (
                   <Box 
-                    key={item} 
-                    component="li" 
+                    key={item}
+                    component="li"
                     sx={{ mb: 1.5 }}
                   >
-                    <Link 
-                      href="#" 
-                      style={{
+                    <Box 
+                      component="a"
+                      href="#"
+                      sx={{
                         color: 'rgba(255, 255, 255, 0.7)',
                         textDecoration: 'none',
                         transition: 'color 0.2s',
                         '&:hover': {
-                          color: theme.palette.primary.main,
+                          color: 'primary.main',
                         },
                       }}
                     >
                       {item}
-                    </Link>
+                    </Box>
                   </Box>
                 ))}
               </Box>
@@ -495,23 +501,24 @@ const Home: React.FC = () => {
               <Box component="ul" sx={{ listStyle: 'none', p: 0, m: 0 }}>
                 {['Features', 'Pricing', 'Integrations', 'Updates'].map((item) => (
                   <Box 
-                    key={item} 
-                    component="li" 
+                    key={item}
+                    component="li"
                     sx={{ mb: 1.5 }}
                   >
-                    <Link 
-                      href="#" 
-                      style={{
+                    <Box 
+                      component="a"
+                      href="#"
+                      sx={{
                         color: 'rgba(255, 255, 255, 0.7)',
                         textDecoration: 'none',
                         transition: 'color 0.2s',
                         '&:hover': {
-                          color: theme.palette.primary.main,
+                          color: 'primary.main',
                         },
                       }}
                     >
                       {item}
-                    </Link>
+                    </Box>
                   </Box>
                 ))}
               </Box>
@@ -541,33 +548,35 @@ const Home: React.FC = () => {
               </Box>
               <Box sx={{ mb: 2, display: 'flex', alignItems: 'center' }}>
                 <EmailIcon sx={{ mr: 2, color: theme.palette.primary.main }} />
-                <Link 
-                  href="mailto:info@acsoguard.com" 
-                  style={{
+                <Box 
+                  component="a"
+                  href="mailto:info@acsoguard.com"
+                  sx={{
                     color: 'rgba(255, 255, 255, 0.7)',
                     textDecoration: 'none',
                     '&:hover': {
-                      color: theme.palette.primary.main,
+                      color: 'primary.main',
                     },
                   }}
                 >
                   info@acsoguard.com
-                </Link>
+                </Box>
               </Box>
               <Box sx={{ display: 'flex', alignItems: 'center' }}>
                 <PhoneIcon sx={{ mr: 2, color: theme.palette.primary.main }} />
-                <Link 
-                  href="tel:+11234567890" 
-                  style={{
+                <Box 
+                  component="a"
+                  href="tel:+11234567890"
+                  sx={{
                     color: 'rgba(255, 255, 255, 0.7)',
                     textDecoration: 'none',
                     '&:hover': {
-                      color: theme.palette.primary.main,
+                      color: 'primary.main',
                     },
                   }}
                 >
                   +1 (123) 456-7890
-                </Link>
+                </Box>
               </Box>
             </Grid>
           </Grid>
@@ -594,9 +603,10 @@ const Home: React.FC = () => {
               © {new Date().getFullYear()} AcsoGuard. All rights reserved.
             </Typography>
             <Box sx={{ display: 'flex', gap: 3 }}>
-              <Link 
-                href="#" 
-                style={{
+              <Box 
+                component="a"
+                href="#"
+                sx={{
                   color: 'rgba(255, 255, 255, 0.5)',
                   textDecoration: 'none',
                   fontSize: '0.875rem',
@@ -606,10 +616,11 @@ const Home: React.FC = () => {
                 }}
               >
                 Privacy Policy
-              </Link>
-              <Link 
-                href="#" 
-                style={{
+              </Box>
+              <Box 
+                component="a"
+                href="#"
+                sx={{
                   color: 'rgba(255, 255, 255, 0.5)',
                   textDecoration: 'none',
                   fontSize: '0.875rem',
@@ -619,10 +630,11 @@ const Home: React.FC = () => {
                 }}
               >
                 Terms of Service
-              </Link>
-              <Link 
-                href="#" 
-                style={{
+              </Box>
+              <Box 
+                component="a"
+                href="#"
+                sx={{
                   color: 'rgba(255, 255, 255, 0.5)',
                   textDecoration: 'none',
                   fontSize: '0.875rem',
@@ -632,40 +644,12 @@ const Home: React.FC = () => {
                 }}
               >
                 Cookie Policy
-              </Link>
+              </Box>
             </Box>
           </Box>
         </Container>
       </Box>
     </>
-                  Login
-                </Button>
-                <Button component="a" href="https://app.acsoguard.com/register" variant="contained" color="primary" sx={{ textTransform: 'none', fontWeight: 800, borderRadius: 999, px: 2.5 }}>
-                  Register
-                </Button>
-                <Button component="a" href="mailto:support@acsoguard.com" variant="outlined" sx={{ textTransform: 'none', fontWeight: 700, borderRadius: 999, px: 2.5 }}>
-                  Contact
-                </Button>
-              </Box>
-            </Grid>
-          </Grid>
-
-          <Box sx={{ borderTop: `1px solid ${theme.palette.divider}`, mt: 4, pt: 3, display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', gap: 2 }}>
-            <Typography variant="body2" color="text.secondary">
-              © {new Date().getFullYear()} AcsoGuard. All rights reserved.
-            </Typography>
-            <Box sx={{ display: 'flex', gap: 3 }}>
-              <Typography variant="body2" component="a" href="#" sx={{ color: 'text.secondary', textDecoration: 'none', '&:hover': { color: 'primary.main' } }}>
-                Privacy
-              </Typography>
-              <Typography variant="body2" component="a" href="#" sx={{ color: 'text.secondary', textDecoration: 'none', '&:hover': { color: 'primary.main' } }}>
-                Terms
-              </Typography>
-            </Box>
-          </Box>
-        </Container>
-      </Box>
-    </Box>
   );
 };
 
