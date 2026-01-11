@@ -14,19 +14,23 @@ import ConstructionIcon from '@mui/icons-material/Construction';
 const HeroSection = styled(Box)(({ theme }) => ({
   position: 'relative',
   color: theme.palette.primary.contrastText,
-  padding: theme.spacing(15, 0, 20),
-  textAlign: 'center',
+  padding: theme.spacing(3, 0, 10),
   overflow: 'hidden',
-  background: `linear-gradient(135deg, ${theme.palette.primary.dark} 0%, ${theme.palette.primary.main} 100%)`,
+  backgroundColor: theme.palette.primary.dark,
   '&::before': {
     content: '""',
     position: 'absolute',
-    width: '100%',
-    height: '100%',
-    top: 0,
-    left: 0,
-    backgroundImage: 'url("data:image/svg+xml,%3Csvg width=\'100\' height=\'100\' viewBox=\'0 0 100 100\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cpath d=\'M11 18c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm48 25c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm-43-7c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm63 31c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM34 90c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm56-76c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM12 86c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm28-65c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm23-11c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-6 60c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm29 22c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zM32 63c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm57-13c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-9-21c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM60 91c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM35 41c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM12 60c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2z\' fill=\'%23ffffff\' fill-opacity=\'0.1\' fill-rule=\'evenodd\'/%3E%3C/svg%3E")',
-    opacity: 0.6,
+    inset: 0,
+    backgroundImage: 'url("https://images.unsplash.com/photo-1526045612212-70caf35c14df?q=80&w=2000&auto=format&fit=crop")',
+    backgroundSize: 'cover',
+    backgroundPosition: 'center',
+    opacity: 0.25,
+  },
+  '&::after': {
+    content: '""',
+    position: 'absolute',
+    inset: 0,
+    background: `linear-gradient(90deg, ${alpha(theme.palette.primary.dark, 0.95)} 0%, ${alpha(theme.palette.primary.dark, 0.55)} 55%, ${alpha(theme.palette.primary.dark, 0.2)} 100%)`,
   },
 }));
 
@@ -69,107 +73,137 @@ const Home: React.FC = () => {
 
   return (
     <Box>
-      {/* Hero Section */}
-       <HeroSection>
-         <Container maxWidth="lg" sx={{ position: 'relative', zIndex: 1 }}>
-          <AnimatedContainer>
-            <Box>
-              <Typography 
-                variant={isMobile ? 'h3' : 'h2'} 
-                component="h1" 
-                gutterBottom
-                sx={{
-                  fontWeight: 800,
-                  lineHeight: 1.2,
-                  mb: 3,
-                  background: `linear-gradient(90deg, #fff, ${theme.palette.secondary.light})`,
-                  WebkitBackgroundClip: 'text',
-                  WebkitTextFillColor: 'transparent',
-                }}
-              >
-                Secure Construction Site Management
-              </Typography>
-            </Box>
-            
-            <Box>
-              <Typography 
-                variant={isMobile ? 'h6' : 'h5'} 
-                sx={{
-                  maxWidth: '800px',
-                  mx: 'auto',
-                  mb: 5,
-                  opacity: 0.9,
-                  fontWeight: 400,
-                }}
-              >
-                Streamline your construction site security with our all-in-one visitor and access management platform. 
-                Keep your site safe, compliant, and efficient.
-              </Typography>
-            </Box>
-            
-            <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center', flexWrap: 'wrap' }}>
-              <Button 
-                variant="contained" 
-                color="secondary" 
-                size={isMobile ? 'medium' : 'large'}
+      <HeroSection>
+        <Container maxWidth="lg" sx={{ position: 'relative', zIndex: 1 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', py: 2 }}>
+            <Typography sx={{ fontWeight: 800, letterSpacing: 0.2 }}>
+              AcsoGuard
+            </Typography>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+              <Button
                 component="a"
-                href="https://app.acsoguard.com/register"
-                sx={{ 
-                  px: 4,
-                  py: 1.5,
-                  borderRadius: '50px',
-                  textTransform: 'none',
-                  fontWeight: 600,
-                  boxShadow: '0 4px 14px rgba(0, 0, 0, 0.25)',
-                  '&:hover': {
-                    transform: 'translateY(-2px)',
-                    boxShadow: '0 6px 20px rgba(0, 0, 0, 0.3)',
-                  },
-                  transition: 'all 0.3s ease',
-                }}
+                href="#features"
+                color="inherit"
+                sx={{ textTransform: 'none', fontWeight: 600, opacity: 0.9 }}
               >
-                Get Started Free
+                Features
               </Button>
-              <Button 
-                variant="outlined" 
-                color="inherit" 
-                size={isMobile ? 'medium' : 'large'}
+              <Button
                 component="a"
                 href="https://app.acsoguard.com/login"
-                sx={{ 
-                  px: 4,
-                  py: 1.5,
-                  borderRadius: '50px',
-                  textTransform: 'none',
-                  fontWeight: 600,
-                  borderWidth: '2px',
-                  '&:hover': {
-                    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                    borderWidth: '2px',
-                  },
-                }}
+                variant="text"
+                color="inherit"
+                sx={{ textTransform: 'none', fontWeight: 700, opacity: 0.95 }}
               >
                 Login
               </Button>
+              <Button
+                component="a"
+                href="https://app.acsoguard.com/register"
+                variant="contained"
+                color="secondary"
+                sx={{ textTransform: 'none', fontWeight: 800, borderRadius: 999, px: 2.5 }}
+              >
+                Register
+              </Button>
             </Box>
-            
-            <Box sx={{ mt: 7.5, position: 'relative', borderRadius: 2, overflow: 'hidden', boxShadow: '0 20px 40px rgba(0, 0, 0, 0.25)', maxWidth: 1000, mx: 'auto', border: '1px solid rgba(255, 255, 255, 0.1)' }}>
-              <img 
-                src="https://images.unsplash.com/photo-1581093057307-9d6bfb8b80d2?q=80&w=1920&auto=format&fit=crop" 
-                alt="Construction site security dashboard" 
-                style={{ 
-                  width: '100%', 
-                  height: 'auto',
-                  display: 'block',
-                }}
-              />
+          </Box>
+
+          <AnimatedContainer>
+            <Grid container spacing={6} alignItems="center" sx={{ pt: { xs: 4, md: 7 } }}>
+              <Grid item xs={12} md={6}>
+                <Chip
+                  label="Visitor & Contractor Management"
+                  sx={{
+                    bgcolor: alpha(theme.palette.common.white, 0.12),
+                    color: 'white',
+                    fontWeight: 700,
+                    mb: 2,
+                  }}
+                />
+                <Typography
+                  variant={isMobile ? 'h3' : 'h2'}
+                  component="h1"
+                  sx={{ fontWeight: 900, lineHeight: 1.05, mb: 2 }}
+                >
+                  Visitor Management,
+                  <Box component="span" sx={{ color: theme.palette.secondary.light }}>
+                    {' '}made for secure sites.
+                  </Box>
+                </Typography>
+
+                <Typography
+                  variant={isMobile ? 'body1' : 'h6'}
+                  sx={{ opacity: 0.9, mb: 4, maxWidth: 560 }}
+                >
+                  AcsoGuard helps construction teams manage check-ins, approvals, contractor access, and audit-ready compliance from one dashboard.
+                </Typography>
+
+                <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+                  <Button
+                    variant="contained"
+                    color="secondary"
+                    size={isMobile ? 'medium' : 'large'}
+                    component="a"
+                    href="https://app.acsoguard.com/register"
+                    sx={{ borderRadius: 999, textTransform: 'none', fontWeight: 800, px: 3.5 }}
+                  >
+                    Create account
+                  </Button>
+                  <Button
+                    variant="outlined"
+                    color="inherit"
+                    size={isMobile ? 'medium' : 'large'}
+                    component="a"
+                    href="https://app.acsoguard.com/login"
+                    sx={{ borderRadius: 999, textTransform: 'none', fontWeight: 800, px: 3.5 }}
+                  >
+                    Sign in
+                  </Button>
+                </Box>
+
+                <Box sx={{ mt: 3, display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                  {['Access control', 'Audit logs', 'Real-time insights'].map((t) => (
+                    <Chip key={t} label={t} size="small" sx={{ bgcolor: alpha(theme.palette.common.white, 0.1), color: 'white' }} />
+                  ))}
+                </Box>
+              </Grid>
+
+              <Grid item xs={12} md={6}>
+                <Box
+                  sx={{
+                    borderRadius: 3,
+                    overflow: 'hidden',
+                    border: `1px solid ${alpha(theme.palette.common.white, 0.18)}`,
+                    boxShadow: '0 24px 60px rgba(0,0,0,0.45)',
+                    bgcolor: alpha(theme.palette.common.white, 0.04),
+                  }}
+                >
+                  <Box
+                    component="img"
+                    src="https://images.unsplash.com/photo-1560448070-cfd26b7023f1?q=80&w=1600&auto=format&fit=crop"
+                    alt="AcsoGuard visitor check-in"
+                    sx={{ width: '100%', height: { xs: 260, md: 360 }, objectFit: 'cover', display: 'block' }}
+                  />
+                </Box>
+              </Grid>
+            </Grid>
+
+            <Box sx={{ mt: { xs: 6, md: 8 }, textAlign: 'left' }}>
+              <Typography variant="subtitle2" sx={{ opacity: 0.8, fontWeight: 800, letterSpacing: 1 }}>
+                ENGINEERED FOR ENTERPRISE COMPLIANCE
+              </Typography>
+              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1.25, mt: 2 }}>
+                {['Construction', 'Manufacturing', 'Facilities', 'Contractors'].map((name) => (
+                  <Chip key={name} label={name} sx={{ bgcolor: alpha(theme.palette.common.white, 0.08), color: 'white' }} />
+                ))}
+              </Box>
             </Box>
           </AnimatedContainer>
         </Container>
       </HeroSection>
 
-      {/* Features Section */}
-      <Box sx={{ py: 10, bgcolor: 'background.default' }}>
+      <Box id="features" sx={{ py: 10, bgcolor: 'background.default' }}>
         <Container maxWidth="lg">
           <Box textAlign="center" mb={8}>
             <Typography 
@@ -608,105 +642,40 @@ const Home: React.FC = () => {
         </Container>
       </Box>
       
-      {/* Footer */}
       <Box sx={{ bgcolor: 'background.paper', py: 6, borderTop: `1px solid ${theme.palette.divider}` }}>
         <Container maxWidth="lg">
-          <Grid container spacing={4}>
-            <Grid item xs={12} md={4}>
-              <Typography variant="h6" sx={{ fontWeight: 700, mb: 2 }}>AcsoGuard</Typography>
-              <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                Modern visitor and access management for construction sites. Keep your site safe, compliant, and efficient.
+          <Grid container spacing={4} alignItems="center">
+            <Grid item xs={12} md={6}>
+              <Typography variant="h6" sx={{ fontWeight: 800, mb: 1 }}>AcsoGuard</Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ maxWidth: 520 }}>
+                Visitor, contractor, and access management for construction sites—built for speed, compliance, and safety.
               </Typography>
-              <Box sx={{ display: 'flex', gap: 2, mt: 2 }}>
-                {['twitter', 'facebook', 'linkedin', 'instagram'].map((social) => (
-                  <Box 
-                    key={social}
-                    sx={{
-                      width: 36,
-                      height: 36,
-                      borderRadius: '50%',
-                      bgcolor: 'action.hover',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      cursor: 'pointer',
-                      transition: 'all 0.3s ease',
-                      '&:hover': {
-                        bgcolor: 'primary.main',
-                        color: 'white',
-                      },
-                    }}
-                  >
-                    <span className={`icon-${social}`} style={{ fontSize: 18 }} />
-                  </Box>
-                ))}
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <Box sx={{ display: 'flex', justifyContent: { xs: 'flex-start', md: 'flex-end' }, gap: 1.5, flexWrap: 'wrap' }}>
+                <Button component="a" href="https://app.acsoguard.com/login" variant="text" sx={{ textTransform: 'none', fontWeight: 700 }}>
+                  Login
+                </Button>
+                <Button component="a" href="https://app.acsoguard.com/register" variant="contained" color="primary" sx={{ textTransform: 'none', fontWeight: 800, borderRadius: 999, px: 2.5 }}>
+                  Register
+                </Button>
+                <Button component="a" href="mailto:support@acsoguard.com" variant="outlined" sx={{ textTransform: 'none', fontWeight: 700, borderRadius: 999, px: 2.5 }}>
+                  Contact
+                </Button>
               </Box>
             </Grid>
-            
-            {[
-              {
-                title: 'Product',
-                links: ['Features', 'Pricing', 'Security', 'Integrations', 'Updates']
-              },
-              {
-                title: 'Company',
-                links: ['About Us', 'Careers', 'Blog', 'Press', 'Contact']
-              },
-              {
-                title: 'Resources',
-                links: ['Documentation', 'Guides', 'Help Center', 'API Status', 'Community']
-              }
-            ].map((column, index) => (
-              <Grid item xs={12} sm={4} md={2} key={index}>
-                <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 2 }}>{column.title}</Typography>
-                <Box component="ul" sx={{ listStyle: 'none', p: 0, m: 0 }}>
-                  {column.links.map((link, i) => (
-                    <li key={i} style={{ marginBottom: '8px' }}>
-                      <Typography 
-                        component="a" 
-                        href="#" 
-                        sx={{
-                          color: 'text.secondary',
-                          textDecoration: 'none',
-                          fontSize: '0.875rem',
-                          transition: 'color 0.2s',
-                          '&:hover': {
-                            color: 'primary.main',
-                          },
-                        }}
-                      >
-                        {link}
-                      </Typography>
-                    </li>
-                  ))}
-                </Box>
-              </Grid>
-            ))}
-            
-            <Grid item xs={12} md={2}>
-              <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 2 }}>Contact</Typography>
-              <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-                support@acsoguard.com
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                +1 (555) 123-4567
-              </Typography>
-            </Grid>
           </Grid>
-          
-          <Box sx={{ borderTop: `1px solid ${theme.palette.divider}`, mt: 6, pt: 4, display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center' }}>
+
+          <Box sx={{ borderTop: `1px solid ${theme.palette.divider}`, mt: 4, pt: 3, display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', gap: 2 }}>
             <Typography variant="body2" color="text.secondary">
               © {new Date().getFullYear()} AcsoGuard. All rights reserved.
             </Typography>
-            <Box sx={{ display: 'flex', gap: 3, mt: { xs: 2, sm: 0 } }}>
+            <Box sx={{ display: 'flex', gap: 3 }}>
               <Typography variant="body2" component="a" href="#" sx={{ color: 'text.secondary', textDecoration: 'none', '&:hover': { color: 'primary.main' } }}>
-                Privacy Policy
+                Privacy
               </Typography>
               <Typography variant="body2" component="a" href="#" sx={{ color: 'text.secondary', textDecoration: 'none', '&:hover': { color: 'primary.main' } }}>
-                Terms of Service
-              </Typography>
-              <Typography variant="body2" component="a" href="#" sx={{ color: 'text.secondary', textDecoration: 'none', '&:hover': { color: 'primary.main' } }}>
-                Cookie Policy
+                Terms
               </Typography>
             </Box>
           </Box>
