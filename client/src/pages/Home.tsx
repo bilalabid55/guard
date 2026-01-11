@@ -461,6 +461,7 @@ const Home: React.FC = () => {
               >
                 Company
               </Typography>
+              <Box component="ul" sx={{ listStyle: 'none', p: 0, m: 0 }}>
                 {['About Us', 'Careers', 'Blog', 'Press'].map((item) => (
                   <Box 
                     key={item}
