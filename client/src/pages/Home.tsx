@@ -638,25 +638,6 @@ const Home: React.FC = () => {
         </Container>
       </Box>
     </>
-            <Typography variant="body2" sx={{ mt: 3, opacity: 0.8 }}>
-              No credit card required • 14-day free trial • Cancel anytime
-            </Typography>
-          </Box>
-        </Container>
-      </Box>
-      
-      <Box sx={{ bgcolor: 'background.paper', py: 6, borderTop: `1px solid ${theme.palette.divider}` }}>
-        <Container maxWidth="lg">
-          <Grid container spacing={4} alignItems="center">
-            <Grid item xs={12} md={6}>
-              <Typography variant="h6" sx={{ fontWeight: 800, mb: 1 }}>AcsoGuard</Typography>
-              <Typography variant="body2" color="text.secondary" sx={{ maxWidth: 520 }}>
-                Visitor, contractor, and access management for construction sites—built for speed, compliance, and safety.
-              </Typography>
-            </Grid>
-            <Grid item xs={12} md={6}>
-              <Box sx={{ display: 'flex', justifyContent: { xs: 'flex-start', md: 'flex-end' }, gap: 1.5, flexWrap: 'wrap' }}>
-                <Button component="a" href="https://app.acsoguard.com/login" variant="text" sx={{ textTransform: 'none', fontWeight: 700 }}>
                   Login
                 </Button>
                 <Button component="a" href="https://app.acsoguard.com/register" variant="contained" color="primary" sx={{ textTransform: 'none', fontWeight: 800, borderRadius: 999, px: 2.5 }}>
